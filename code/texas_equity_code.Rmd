@@ -20,10 +20,23 @@ output:
 
 ## Getting Started
 
-# TODO: Let's put some text here explaining what you'll need
+To complete this tutorial, the user will need R, RStudio, and the following R 
+packages installed on his/her machine: 
 
-To complete this tutorial you'll need R, RStudio, and the following packages 
-installed on your machine: 
+- `tidyverse`: For convenient data and output manipulation
+- `ggplot2`: For graphics
+- `broom`: For tidying regression output
+- `FSA`: To create comparative summary tables
+
+To install packages, such as `ggplot2`, run the following command in the R 
+console:
+
+`install.packages('ggplot2')`
+
+In addition, this guide will draw from OpenSDP-written functions defined in 
+the `functions.R` document, which is located in the `R` folder of this guide's
+GitHub repository. Please make sure to have downloaded the entire GitHub 
+repository to run this code.
 
 
 ```{r knitrSetup, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE, comment=NA}
@@ -49,7 +62,7 @@ options(width=80)
 
 In this guide, you will use data visualization and descriptive statistics to
 investigate equity in student testing outcomes along lines of race, income,
-gender, learning differences, English proficiency, and migrancy status.
+gender, learning differences, English proficiency, and migrant status.
 
 ### Using this Guide
 
@@ -62,7 +75,7 @@ student testing outcomes are analyzed.
 Once you have identified analyses that you want to try to replicate or modify,
 click the "Download" buttons to download R code and sample data. You can make
 changes to the charts using the code and sample data, or modify the code to work
-with your own data. If you are familiar with Github, you can click "Go to
+with your own data. If you are familiar with GitHub, you can click "Go to
 Repository" and clone the entire repository to your own computer.
 
 Go to the Participate page to read about more ways to engage with the OpenSDP
@@ -104,9 +117,9 @@ The original Texas Education Agency data files have hundreds of features
 attached to each student record. Coding our analyses with all of these features
 could get unwieldy, so the best practice is to select the key features we will
 need for our analyses. If you would like to directly use your own data with the
-code from this guide, it is best to delete unecessary features and change the
+code from this guide, it is best to delete unnecessary features and change the
 headers to the feature names we chose (above). A more detailed data definition
-guide can be found in the `man` folder in the Github repository.
+guide can be found in the `man` folder in the GitHub repository.
 
 Although not required, it is useful to compile a small table of the standard
 deviations of the scores on the exams statewide, broken down by grade and
@@ -126,7 +139,7 @@ This guide takes advantage of the OpenSDP synthetic dataset and several key R
 packages. The first chunk of code below loads the R packages (make sure to
 install first!), and the second chunk loads the dataset and provides us with
 variable labels. You can change the variable labels depending on the variables
-in your dataset.
+in your dataset. 
 
 ```{r packages, eacho=FALSE}
 #Packages
@@ -171,6 +184,12 @@ prof_lev$score <- c(1360, 1467, 1500, 1536, 1575, 1595,
                   1555, 1633, 1667, 1718, 1753, 1783)
 ```
 
+Note that the above code chunk also stores proficiency levels set by the state
+of Texas, which include score cut-offs for "approaching," "meets," and
+"masters" on its state tests. Including proficiency levels will be helpful for
+the visualizations included below, in order to give the viewer a sense of scale
+and a sense of score quality. The user can adjust these proficiency levels, 
+depending on context. 
 
 ### About the Analyses
 
@@ -184,7 +203,7 @@ about them.
 
 ### Giving Feedback on this Guide
  
-This guide is an open-source document hosted on Github and generated using R
+This guide is an open-source document hosted on GitHub and generated using R
 Markdown. We welcome feedback, corrections, additions, and updates. Please visit
 the OpenSDP equity metrics repository to read our contributor guidelines.
 
@@ -192,7 +211,7 @@ the OpenSDP equity metrics repository to read our contributor guidelines.
 
 We will now walk through a series of four analysis in this guide. The first will 
 be a basic exploration of the performance gaps by subgroups on the assessments. 
-THe next will look at how the gaps vary across schools. The third will model 
+The next will look at how the gaps vary across schools. The third will model 
 a targeting exercise to identify schools for possible intervention or further 
 investigation. The final analysis will use regression modeling to look at the 
 magnitude of the largest gap(s) in the district while controlling for other 
@@ -286,7 +305,7 @@ are negative, and the labeling on the graph shows us the effect size was
 calculated with the average score for male "M" students subtracted from the
 average score for female "F" students. Thus, on average, the male students
 scored higher than female students. In our dataset, these gaps were wider than
-any other gap based in racial differences, socioeconoimc differences,
+any other gap based in racial differences, socioeconomic differences,
 differences in English proficiency status, or differences in special education
 status.
 
@@ -308,7 +327,7 @@ our data surpass this threshold and are similar across grade levels. For
 simplicity, this report will focus on one grade level, but the following
 analyses can be done across grade levels.
 
-One technical note: Sometimes the distibutions of test scores can be skewed,
+One technical note: Sometimes the distributions of test scores can be skewed,
 making the median a more advantageous measure of central tendency (since it is
 less sensitive to outliers and skew). In these cases, set the `gap.test`
 function's `med` parameter to `TRUE` to output a plot that shows the top 3 gaps
@@ -318,7 +337,7 @@ Since our largest effect size gap was the grade 3 gender gap on the standardized
 math test, we will explore that gap further. For demonstration purposes, we will
 focus on just that one gap here. However, the next chunk of code will determine
 which gap(s) will be explored in the rest of our analyses. The user can explore
-multipe gaps at once by setting the following variables to include multiple gaps
+multiple gaps at once by setting the following variables to include multiple gaps
 from `gap.table`. This is shown in commented out code in the middle of the
 chunk.
 
@@ -423,7 +442,11 @@ We see left skew in the distribution of scores, as evidenced by the box plot and
 (more clearly) evidenced by the histogram. With skew present, it often makes
 sense to use the median as a measure of central tendency, since it is less
 susceptible to skew than the mean. We will keep this in mind during our
-forthcoming analyses.
+forthcoming analyses. In addition, it is notable that the median of scores is 
+very close to the the "meets standard" benchmark, while the third quartile of 
+scores is very close the mastery benchmark level. This means that about half of 
+all students meet the standard and a quarter of all students show mastery level 
+understanding on the exam.
 
 **Analytic Technique:** Compare descriptive statistics among the different
 student demographic populations described in our gap. Now that we have some
@@ -521,10 +544,24 @@ down by gender group, the distributions maintain a left skew, which provides
 even more support for using the median as a measure of central tendency in the
 following analyses.
 
+Among all students taking the exam, the median score was very close to the
+"meets standard" benchmark score and the third quartile was very close to the
+mastery benchmark. However, the box plot graphic above illustrates that for
+female students, the median of scores falls below the "meets" benchmark, and the 
+third quartile falls below the mastery benchmark. Therefore, fewer than half of 
+female students met the standard on the exam and fewer than a quarter
+demonstrated mastery. 
+
+By contrast, the median and third quartile for male scores outperform the 
+"meets" and "masters" benchmarks respectively. Greater than half of male 
+students met the standard on the exam and more than a quarter demonstrated 
+mastery.
+
+
 **Analytic Technique:** Explore gap within levels of another data feature.
 Often, it can be helpful to look at the intersections of the demographic data we
 pulled. In particular, exploring possible gaps among combinations of race,
-socioeconomic status, gender, and student label status (LEP, Spec Ed, Migrancy,
+socioeconomic status, gender, and student label status (LEP, Spec Ed, Migrant,
 etc.) can elucidate further achievement gaps in the data. Here, we will explore
 the intersection of socioeconomic status (measured by economic disadvantage) and
 the gender gap in math, by measuring the gender gap within each level of
@@ -550,6 +587,7 @@ We perform this through descriptive statistics and data visuals:
 
 ```{r DescriptiveCombos, echo=TRUE}
 # // Analysis 1: Comparing within groups--Socioeconomic gaps within our chosen features
+# // Descriptive Statistics
 #Set the feature you would like to compare within
 group.by <- "eco_dis"
 
@@ -567,22 +605,60 @@ for(i in 1:n.gaps){
   data = data[data[,dem] == lvl1 | data[,dem] == lvl2, ]#Isolates demographic groups
   res <- levels(as.factor(data[,group.by])) #Different levels of 'group.by' to explore
 
-  # print(paste("Grade:",grade,",",labels[subject])) #Print subject and grade level
-  # TODO: Break out the output here into multiple chunks with some text interleaved
-  # so that the tables and plots are explained separately 
-  # So chunk A = dataframes, B = histograms C = boxplots
-  # Facet by group by
-  bp <- ggplot(data, aes(x=as.factor(data[,dem]), 
-                               y=data[,subject])) + 
-              geom_boxplot() +
-              ggtitle(paste("Grade:",grade,",", 
-                            labels[subject],",",labels[group.by])) +
-              scale_y_continuous(name=labels[subject]) +
-              scale_x_discrete(name=labels[dem]) + facet_wrap(group.by)
+  print(paste("Grade:",grade,",",labels[subject])) #Print subject and grade level
   
-   bp <- add_ref_levels(plot = bp, prof_levels = prof_lev, direction = "horizontal", 
-                         grade = grade, subject = subject) + theme_bw()
+  #Loop over group.by levels
+  for(re in res){
+  
+    #Isolates observations from particular group in group.by
+    data.res <- data[data[,group.by]==re,]
+    
+    #Makes gap comparison table for particular group
+    a<-Summarize(data.res[,subject] ~ data.res[,dem]) #Makes comparison table
+    colnames(a)[1] <- labels[dem]
+    print(paste(labels[group.by],": ",re))
+    print(a) #Prints comparison table
+    
+  } #End loop over group.by levels
+  
+} #End loop over gap number
+
+```
+
+The summary tables show that the medians are shifted upwards by about 40 points 
+among each socioeconomic group. This would suggest that the inequities have 
+about the same magnitude within each socioeconomic level. 
+
+However, measures of central tendency are not the only metrics an analyst can 
+use to compare inequities. The shapes of these distributions may differ between 
+socioeconomic levels. For example, we may notice more right skew among male 
+students who receive free lunch. This could reveal gender inequities among 
+higher-performing students in the free lunch category, which may be unique to 
+that socioeconomic level. In addition, spread could differ between socioeconomic
+levels.
+
+It can be difficult to judge shape from summary tables.We will make these 
+comparisons through histogram and box plot visualizations.
+
+```{r CombosHist}
+# // Analysis 2: Comparing within groups--Socioeconomic gaps within our chosen features
+# // Histograms
+
+#Loop over gap number in our table of gaps
+for(i in 1:n.gaps){
+  
+  #Save grade, subject tested, and demographic information
+  grade <- gaps[i,"grade_level"]
+  subject <- gaps[i,"outcome"]
+  dem <- gaps[i,"feature"]
+  lvl1 <- gaps[i,"level_1"]
+  lvl2 <- gaps[i,"level_2"]
+  
+  data = texas_data[texas_data$grade_level == grade,] #Isolates grade level
+  data = data[data[,dem] == lvl1 | data[,dem] == lvl2, ]#Isolates demographic groups
+  res <- levels(as.factor(data[,group.by])) #Different levels of 'group.by' to explore
    
+   # Facet by group by
    h <- ggplot(data, aes(x=data[,subject], 
                               fill = as.factor(data[,dem]))) + 
               ggtitle(paste("Grade:",grade,",", 
@@ -592,23 +668,80 @@ for(i in 1:n.gaps){
               values=colors[1:length(levels(as.factor(data[,dem])))]) +
               scale_x_continuous(name=paste(labels[subject]))  + 
      facet_wrap(group.by)
+   
+    # Add reference levels
     h <- add_ref_levels(plot = h, prof_levels = prof_lev, direction = "vertical", 
                          grade = grade, subject = subject) + 
       theme_bw() + theme(legend.position = c(0.2, 0.8))
     
         
     print(h) #Print histogram
-}
+    
+}# End loop over gap number
+
 ```
 
-The box plots show that the distributions are shifted upwards for male students
+Histograms are especially useful for determining shape. Here, we see similarly
+asymmetric distributions, with left skew for males and females within
+each socioeconomic level. Again, the inequities between genders appear similar
+across socioeconomic level. It can be difficult to judge, however, exactly how
+much better males are performing than females at different points in the 
+distributions (especially for the distributions with lower sample sizes). For
+that, we turn to box plots.
+
+```{r CombosBoxPlots}
+# // Analysis 3: Comparing within groups--Socioeconomic gaps within our chosen features
+# // Boxplots
+
+#Loop over gap number in our table of gaps
+for(i in 1:n.gaps){
+  
+  #Save grade, subject tested, and demographic information
+  grade <- gaps[i,"grade_level"]
+  subject <- gaps[i,"outcome"]
+  dem <- gaps[i,"feature"]
+  lvl1 <- gaps[i,"level_1"]
+  lvl2 <- gaps[i,"level_2"]
+  
+  data = texas_data[texas_data$grade_level == grade,] #Isolates grade level
+  data = data[data[,dem] == lvl1 | data[,dem] == lvl2, ]#Isolates demographic groups
+  res <- levels(as.factor(data[,group.by])) #Different levels of 'group.by' to explore
+  
+  # Facet by group by
+  bp <- ggplot(data, aes(x=as.factor(data[,dem]), 
+                               y=data[,subject])) + 
+              geom_boxplot() +
+              ggtitle(paste("Grade:",grade,",", 
+                            labels[subject],",",labels[group.by])) +
+              scale_y_continuous(name=labels[subject]) +
+              scale_x_discrete(name=labels[dem]) + facet_wrap(group.by)
+   
+   #Add reference levels 
+   bp <- add_ref_levels(plot = bp, prof_levels = prof_lev, direction = "horizontal", 
+                         grade = grade, subject = subject) + theme_bw()
+   
+   print(bp) # Print boxplots
+    
+}# End loop over gap number
+
+```
+
+The box plots illustrate that the distributions are shifted upward for male students
 compared to female students across each socioeconomic marker. In addition, the
-summary tables show that the medians are shifted upwards, again, by about 40
-points among each socioeconomic group. The shape of the distributions, as shown
-in the histograms, also remains roughly consistent across socioeconomic level.
+magnitude of this shift appears consistent across quartiles, medians, minimums, 
+and maximums. One particular trend the box plot reveals is that median scores
+for male students are consistently at the "meets standard" benchmark and above,
+whereas the median scores for female students fall below that benchmark in each 
+group. 
+
+Since the summary tables already showed us that the medians 
+between males and females tend to differ by about 40 for each group, and the 
+histograms showed us that the shape of the distributions also remains roughly 
+consistent across socioeconomic levels, we do not have reason to believe that 
+gender inequities are very different between socioeconomic levels in our data. 
 Since the gap persists at each socioeconomic level, our analysis should focus on
-the gender gap overall, rather than for any one particular set of socioeconomic
-subgroups.
+the gender gap overall, rather than the gender gap for any one particular set of
+socioeconomic subgroups.
 
 **Follow up question: How does this analysis look disaggregated by race/ethnicity?**
 
@@ -734,7 +867,7 @@ for(i in 1:n.gaps){
 ```
 
 A common reaction to the above graphic is to wonder if the schools with the
-greatest magnitude gaps--such as school number 8 in our data-- has discriminitory 
+greatest magnitude gaps--such as school number 8 in our data-- has discriminatory 
 practices towards female students. Discriminatory practices are often implicit 
 and unintentional which is why data on achievement gaps can be a helpful prompt 
 on where to look to review practices further that may be creating implicit 
@@ -755,8 +888,8 @@ It is also helpful to take into account the unique dynamics of specialized
 schools. For example, school 8 may be a selective arts program, in which most of
 the students enrolled for performance art are female and most enrolled for music
 are male. In such a case, there may be a selection bias, as aspiring performance
-artists may focus on mgath less in their education than music students, who study
-rhythmn and theory. Due to selection bias, this could show up in our analysis as
+artists may focus on math less in their education than music students, who study
+rhythm and theory. Due to selection bias, this could show up in our analysis as
 a gender gap.
 
 Ideally, we would want to look further into the practices and data of schools
@@ -766,7 +899,7 @@ shrinking), participation rates in advanced mathematics courses by gender, or
 classroom observations of math instruction. These types of analyses would help
 further identify schools and provide additional information that schools could
 share about their practices and procedures to contrast high and low gap school
-ptracitces. This visualization could provide impetus for the start a
+practices. This visualization could provide impetus for the start a
 collaborative conversation between campuses.
 
 ### Identifying Target Schools
@@ -800,7 +933,7 @@ our target population (here, female students). This will give us a sense of
 where students from our target student population are performing relatively
 poorly compared to their peers at other schools. Again, we choose the medians
 here because they are less susceptible to skew and outliers. We will visualize
-these medians with bar charts, and we will visualize the three lowest peforming
+these medians with bar charts, and we will visualize the three lowest performing
 schools with comparative box plots.
 
 ```{r MedianTargets, echo=TRUE}
@@ -1039,27 +1172,26 @@ populations.
 **Ask Yourself**
 
 - Can we draw causal estimates from this type of analysis, or is it only
-correlatoinal?
+correlational?
 - How do we best choose what controls we use in our equations?
 
 **Analytic Technique:** Perform multiple regression. We choose multiple
 regression because our outcome variable (scale scores on tests) is approximately
-continuous, and the technique will allow us to come up with our correlatoin
+continuous, and the technique will allow us to come up with our correlation
 estimates while controlling for various factors. Note: the user will have to set
 the variable for which s/he would like to control. Many combinations are
 possible, and we make the following specific recommendations (the code will
 default to these recommendations):
 
-- If analyzing race gaps, control for socioeconomic level and english proficiency status.
+- If analyzing race gaps, control for socioeconomic level and English proficiency status.
 - If analyzing gender gaps, control for race and socioeconomic level.
-- If analyzing socioeconomic gaps, control for race and english proficiency status.
+- If analyzing socioeconomic gaps, control for race and English proficiency status.
 
 In the code block below, there is space to override these defaults if you would
 like to control for other factors in combinations other than the ones listed
-above.
-
-# TODO: Let's add a citation to the original source of this analysis, the SDP 
-# CG analysis guide
+above. Note that this code is largely based on similar analyses from OpenSDP's
+college-going analyses. An example college-going guide can be found [here](https://opensdp.github.io/college-going-r/college_going_enrollment.html)
+(along with its accompanying repository [here](https://github.com/opensdp/college-going-r)).
 
 ```{r CoefficientAnalysis, echo=TRUE}
 # // Step 1: Initialize controls
@@ -1217,7 +1349,7 @@ for(i in 1:n.gaps){
 }#End loop over gap number
 ```
 
-The gender gap, as demonstrated by the regression coefficent values visualized
+The gender gap, as demonstrated by the regression coefficient values visualized
 as bars above, remains highly consistent, even after controlling for
 race-ethnicity and economic disadvantage level in our dataset. In the regression
 equations, the coefficient remains highly significant (p < 0.0001). Therefore,
