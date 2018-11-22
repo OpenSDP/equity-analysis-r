@@ -1,4 +1,5 @@
 .Rproj.user
 figure
 cache
-*.Rhistory
+.Rdata
+.Rhistory
