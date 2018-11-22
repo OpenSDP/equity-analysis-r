@@ -1,24 +1,39 @@
 # Packages
 library(tidyverse)
-
-###Explores dataset to find widest achievement gaps
-##Outputs list of largest largest achievement gaps (computd by effect size)
-##Prints visuals of largest achievement gaps
-#df = data, should be wide format, one row per student, and have column for grade level (class: data frame)
-#grade = name of tested grade column in dataset (class: character)
-#outcome = name of outcome variable (usually test scores) in dataset (class: character)
-#features = vector of features in dataset where testing for gaps (class: character)
-#n = set 'n' largest gaps the function outputs at the end (class: integer, default: 3)
-#sds (optional) = dataframe containing the standard deviations for all outcomes (class: data frame)
-#comp (optional) = indicator to output additional comparative gap graphics (class: boolean, default: FALSE)
-#cut (optional) = minimum number of students for level in a gap (class: integer)
-#med (optional) = indicator if would like function to also output top standardized difference of medians (class: boolean, default: FALSE)
-#outlbl (optional) = label for outcome to print on graphs  (class: character, default: NULL)
-
 ##Begin function
-gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL, comp = FALSE, 
-                     cut = NULL, med = FALSE, outlbl = NULL) {
+#' Gap Test
+#' @description Explores dataset to find widest achievement gaps
+#' @param df data, should be wide format, one row per student, and have column 
+#' for grade level (class: data frame)
+#' @param grade  name of tested grade column in dataset (class: character)
+#' @param outcome name of outcome variable (usually test scores) in dataset 
+#' (class: character)
+#' @param features vector of features in dataset where testing for gaps 
+#' (class: character)
+#' @param n set 'n' largest gaps the function outputs at the end 
+#' (class: integer, default: 3)
+#' @param sds dataframe containing the standard deviations for all outcomes 
+#' (class: data frame)
+#' @param comp indicator to output additional comparative gap graphics 
+#' (class: boolean, default: FALSE)
+#' @param cut minimum number of students for level in a gap (class: integer)
+#' @param med indicator if would like function to also output top standardized 
+#' difference of medians (class: boolean, default: FALSE)
+#' @param outlbl label for outcome to print on graphs  
+#' (class: character, default: NULL)
+#' @author Dashiell Young-Saver
+#' @author OpenSDP
+#'
+#' @return Outputs list of largest largest achievement gaps 
+#' (computed by effect size). Prints visuals of largest achievement gaps
+#' @export
+#'
+#' @examples
+gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL, 
+                     comp = FALSE, cut = NULL, med = FALSE, outlbl = NULL) {
   
+  # TODO: cut out the plotting part of this function to a separate function
+  # TODO: Clean up the output of this function
   #See if no standard deviations provided
   if(is.null(sds)){
 

@@ -66,7 +66,8 @@ context.
 
 The data used in this guide was synthetically generated, and it was formatted to
 match the Texas Education Agency's state test file formats (Texas's file formats
-can be found here: https://tea.texas.gov/student.assessment/datafileformats).
+can be found here: 
+[https://tea.texas.gov/student.assessment/datafileformats](https://tea.texas.gov/student.assessment/datafileformats)).
 The data has one record per student. Out of the hundreds of features reported
 for each student by the Texas Education Agency, we used (and retained) the
 following features in our analysis: student grade level (3-8), school code,
