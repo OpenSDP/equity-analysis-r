@@ -16,7 +16,8 @@ library(tidyverse)
 #' (class: data frame)
 #' @param comp indicator to output additional comparative gap graphics 
 #' (class: boolean, default: FALSE)
-#' @param cut minimum number of students for level in a gap (class: integer)
+#' @param cut minimum number of students for level in a gap (class: integer, 
+#' default = 50)
 #' @param med indicator if would like function to also output top standardized 
 #' difference of medians (class: boolean, default: FALSE)
 #' @param outlbl label for outcome to print on graphs  
@@ -30,17 +31,15 @@ library(tidyverse)
 #'
 #' @examples
 gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL, 
-                     comp = FALSE, cut = NULL, med = FALSE, outlbl = NULL) {
+                     comp = FALSE, cut = 50, med = FALSE, outlbl = NULL) {
   
-  # TODO: cut out the plotting part of this function to a separate function
-  # TODO: Clean up the output of this function
   #See if no standard deviations provided
   if(is.null(sds)){
 
     
     #Notify user
     message("No standard deviations provided. 
-            Will use standard deviations calculated from prvoided dataset.")
+            Will use standard deviations calculated from provided dataset.")
     
     #Find standard deviation for each grade
     sds.by.grades <- tapply(df[,outcome], df[,grade],sd)
@@ -48,12 +47,13 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
     #Create standard deviation dataframe
     sds <- data.frame(grade_level = names(sds.by.grades),
                          out = sds.by.grades)
+    colnames(sds)[1] <- grade
     colnames(sds)[2] <- outcome
     rownames(sds) <- NULL
     sds[,1] <- as.integer(as.character(sds[,1]))
     sds[,2] <- as.numeric(as.character(sds[,2]))
     
-  }#End of conditional
+  } #End of conditional
   
   #Test to make sure feature names and dimensions are correct
   if(!any(colnames(sds)==grade) | 
@@ -100,8 +100,8 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
   }#End of conditional
   
   #Convert features to factors
-  df[,features] <- lapply(df[,features], as.character)
-  df[,features] <- lapply(df[,features], as.factor)
+  df[,features] <- lapply(df[,features, drop = FALSE], as.character)
+  df[,features] <- lapply(df[,features, drop = FALSE], as.factor)
   
   #Get all grade levels for the chosen tested subject
   grades <- sds[!is.na(sds[,outcome]),grade]
@@ -115,6 +115,16 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
   effects.gr <- vector()
   effects.outcome <- vector()
   mean_diffs <- vector()
+
+    #Stores outcome label, based on user input
+  if(is.null(outlbl)){
+    
+    #Store label as column name
+    outlbl <- outcome
+  } else if(class(outlbl)!="character"){
+    
+    stop("outlbl must be of type 'character'")
+  }
   
   #Loop over grade levels
   for(gr in grades){
@@ -123,7 +133,7 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
     dat.grade <- df[df[,grade]==gr,]
     
     #Get standard deviation for scale scores at that grade level
-    sd <- sds[sds[,grade]==gr,outcome]
+    sd.gr <- sds[sds[,grade]==gr,outcome]
     
     #Loop over features
     for(feature in features){
@@ -142,8 +152,7 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
         
         #See if any levels left
         if(length(lvl) < 2){
-          
-          #Error
+          # Error
           stop(paste("Cut point too high: no data left to compare for",
                      feature,gr,outcome))
           
@@ -164,7 +173,7 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
         #Measure gap (in terms of standardized median difference)
         level1.data <- dat.grade[dat.grade[,feature]==level1,outcome]
         level2.data <- dat.grade[dat.grade[,feature]==level2,outcome]
-        gap <- (median(level1.data) - median(level2.data))/sd
+        gap <- (median(level1.data) - median(level2.data))/sd.gr
         
         #Append gap to list and name in
         gaps <- append(gaps,gap,length(gaps))
@@ -211,26 +220,8 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
   effects.outcome <- effects.outcome[order(abs(effects), decreasing = TRUE)]
   mean_diffs <- mean_diffs[order(abs(effects), decreasing = TRUE)]
   
-  #Stores outcome label, based on user input
-  if(is.null(outlbl)){
-    
-    #Check to see if character
-    if(class(outlbl)!="character"){
-      
-      stop("outlbl must be of type 'character'")
-    }
-    
-    #Store label as column name
-    outlbl <- outcome
-  }
-  
-  #Stores outcome label, based on user input
-  if(is.null(outlbl)){
-    
-    #Store label as column name
-    outlbl <- outcome
-  }
-  
+
+ 
   ##If want to show gaps by feature, will make and show plots
   if(comp){
     
@@ -305,7 +296,7 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
   #Standardized difference of medians
   #Will only do this if user asks
   if(med){
-
+    # TODO: Where does N come from
     #Make into dataframe
     plot.df.med <- data.frame(names <- names(sorted.gaps[1:n]),
                               med.s.gaps <- sorted.gaps[1:n])
@@ -352,14 +343,13 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
   #Determine y-axis limits
   if(min(plot.df.effect$med.s.eff) < -0.11){
     limit1 = min(plot.df.effect$med.s.eff) - 0.03
-  }
-  else{
+  } else {
     limit1 = -.11
-  }
+  } 
+  
   if(max(plot.df.effect$med.s.eff) > 0.11){
     limit2 = max(plot.df.effect$med.s.eff) + 0.03
-  }
-  else{
+  } else {
     limit2 = .11
   }
   
