@@ -33,20 +33,254 @@ library(tidyverse)
 gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL, 
                      comp = FALSE, cut = 50, med = FALSE, outlbl = NULL) {
   
-  #See if no standard deviations provided
-  if(is.null(sds)){
-
-    
-    #Notify user
+  # Check for user-provided standard deviations
+  if (is.null(sds)) {
+    # Notify user
     message("No standard deviations provided. 
             Will use standard deviations calculated from provided dataset.")
+    # Find standard deviation for each grade
+    sds.by.grades <- tapply(df[,outcome], df[,grade],sd)
+    
+    # Create standard deviation dataframe
+    sds <- data.frame(grade_level = names(sds.by.grades),
+                         out = sds.by.grades)
+    colnames(sds)[1] <- grade
+    colnames(sds)[2] <- outcome
+    rownames(sds) <- NULL
+    sds[,1] <- as.integer(as.character(sds[,1]))
+    sds[,2] <- as.numeric(as.character(sds[,2]))
+    
+  }
+  
+  # Test for alignment between the sds and the
+  if (!any(colnames(sds) == grade) | 
+     !any(colnames(sds) == outcome) |
+     dim(sds)[1] > 20 ) {
+    
+    #Make example sd dataframe
+    ex.sds <- data.frame(grade_level = c(3,4,5,6,7,8),
+                         math_ss = c(148.22,145.65,143.06,145.00,128.79,121.22),
+                         rdg_ss = c(132.00,127.53,128.76,123.57,120.79,124.79),
+                         wrtg_ss = c(NA,513.66,NA,NA,514.66,NA))
+    
+    message("sds object formatted incorrectly. Should be formatted 
+            like the following example, as a dataframe, first column is grade level
+            other columns are standard deviations for different test subjects,
+            feature names match names of dataframe features and function
+            inputs for 'grade' and 'outcome'.")
+    print(ex.sds)
+    
+    stop("Either re-format the input to sds or use function without
+            providing standard deviations")
+    
+  }
+  
+  # Test to see if data is correct class
+  if(class(sds[,grade]) %nin% c('integer', 'numeric') | # this is too strict
+    class(sds[,outcome]) != 'numeric') {
+      
+      #Make example dataframe of sds
+      ex.sds <- data.frame(grade_level = c(3,4,5,6,7,8),
+                           math_ss = c(148.22,145.65,143.06,145.00,128.79,121.22),
+                           rdg_ss = c(132.00,127.53,128.76,123.57,120.79,124.79),
+                           wrtg_ss = c(NA,513.66,NA,NA,514.66,NA))
+      
+      message("Error: Grade level in sds table should be class
+            'integer' and standard deviation columns shuld be class 'numeric'.
+              Like example below:")
+      
+      print(ex.sds)
+      
+      stop("Either re-format the input to sds or use function without
+           providing standard deviations")
+      
+  } #End of conditional
+  
+  #Convert features to factors
+  df[,features] <- lapply(df[,features, drop = FALSE], as.character)
+  df[,features] <- lapply(df[,features, drop = FALSE], as.factor)
+  
+  #Get all grade levels for the chosen tested subject
+  grades <- unique(df[!is.na(df[,outcome]),grade])
+  
+  #Will store all calculated achievement gaps and effect sizes
+  gaps <- vector()
+  effects <- vector()
+  effects.level1 <- vector()
+  effects.level2 <- vector()
+  effects.f <- vector()
+  effects.gr <- vector()
+  effects.outcome <- vector()
+  raw_diffs <- vector()
+
+    #Stores outcome label, based on user input
+  if(is.null(outlbl)){
+    
+    #Store label as column name
+    outlbl <- outcome
+  } else if(class(outlbl)!="character"){
+    
+    stop("outlbl must be of type 'character'")
+  }
+  
+  #Loop over grade levels
+  for(gr in grades){
+    
+    #Break down data by grade
+    dat.grade <- df[df[,grade]==gr,]
+    
+    #Get standard deviation for scale scores at that grade level
+    sd.gr <- sds[sds[,grade]==gr,outcome]
+    
+    #Loop over features
+    for(feature in features){
+      
+      #Get levels of feature
+      lvl <- levels(dat.grade[,feature])
+      
+      #Cut levels if cut point given
+      if(!is.null(cut)){
+        
+        #Table of factor values
+        lvl.table <- table(dat.grade[,feature])
+        
+        #Initialize vector of levels to cut
+        lvl <- names(lvl.table[lvl.table >= cut])
+        
+        #See if any levels left
+        if(length(lvl) < 2){
+          # Error
+          stop(paste("Cut point too high: no data left to compare for",
+                     feature,gr,outcome))
+          
+        }#End inner conditional
+        
+      }#End outer conditional
+      
+      #Get matrix of all combos of levels
+      com.lvl <- combn(lvl,2)
+      
+      #Loop over combinations
+      for(i in 1:dim(com.lvl)[2]){
+        
+        #Get levels you will compare gaps for
+        level1 <- com.lvl[1,i]
+        level2 <- com.lvl[2,i]
+        
+        #Measure gap (in terms of standardized median difference)
+        level1.data <- dat.grade[dat.grade[,feature]==level1,outcome]
+        level2.data <- dat.grade[dat.grade[,feature]==level2,outcome]
+        # Gap here is based on medians
+        if(med) {
+          gap <- (median(level1.data) - median(level2.data))/sd.gr
+        } else {
+          gap <- (mean(level1.data) - mean(level2.data))/sd.gr
+        }
+        #Append gap to list and name in
+        gaps <- append(gaps,gap,length(gaps))
+        names(gaps)[length(gaps)] <- paste(level1,"-",level2,", ",
+                                           feature,'\n',"Grade ",gr,
+                                           ", ",outcome, sep="")
+        
+        #Append mean difference to list
+        if(med) {
+          raw_diff <- median(level1.data) - median(level2.data)
+          raw_diffs <- append(raw_diffs, raw_diff, length(raw_diffs))
+        } else {
+          raw_diff <- mean(level1.data) - mean(level2.data)
+          raw_diffs <- append(raw_diffs, raw_diff, length(raw_diffs))
+        }
+        
+        # 
+        #Measure the effect size (r)
+        var.1 <- var(level1.data)
+        var.2 <- var(level2.data)
+        sd.pooled <- sd(c(var.1, var.2))
+        # Effect size is measured by mean or median based on control
+        # Calculate delta and standardize using pooled sd
+        if(med) {
+          d <- (median(level1.data) - median(level2.data))/sd.pooled
+        } else {
+          d <- (mean(level1.data) - mean(level2.data))/sd.pooled
+        }
+        # Effect size adjustment for difference
+        r <- d/sqrt(d^2+4)
+        
+        #Append effect size and information to lists and name
+        effects <- append(effects,r,length(effects))
+        names(effects)[length(effects)] <- paste(level1,"-",level2,", ",
+                                                 feature,'\n',"Grade ",gr,
+                                                 ", ",outlbl, sep="")
+        effects.level1 <- append(effects.level1, level1, length(effects.level1))
+        effects.level2 <- append(effects.level2, level2, length(effects.level2))
+        effects.f <- append(effects.f, feature, length(effects.f))
+        effects.gr <- append(effects.gr, gr, length(effects.gr))
+        effects.outcome <- append(effects.outcome, outcome, length(effects.outcome))
+        
+        
+      } #End loop over combinations
+      
+    } #End loop over features
+    
+  } #End loop over grade levels
+  
+  #Sort gaps and effect sizes largest to smallest in magnitude
+  sorted.gaps <- gaps[order(abs(gaps), decreasing=TRUE)]
+  effects.sorted <- effects[order(abs(effects), decreasing = TRUE)]
+  effects.level1 <- effects.level1[order(abs(effects), decreasing = TRUE)]
+  effects.level2 <- effects.level2[order(abs(effects), decreasing = TRUE)]
+  effects.f <- effects.f[order(abs(effects), decreasing = TRUE)]
+  effects.gr <- effects.gr[order(abs(effects), decreasing = TRUE)]
+  effects.outcome <- effects.outcome[order(abs(effects), decreasing = TRUE)]
+  raw_diffs <- raw_diffs[order(abs(effects), decreasing = TRUE)]
+  
+  #Prints n largest gaps and meaning
+  #Standardized difference of medians
+  #Will only do this if user asks
+  
+  n <- ifelse(n > length(effects.f), length(effects.f), 
+              n)
+  
+  #Output a table of groups with largest effect sizes
+  output.table <- data.frame(level_1 = effects.level1[1:n],
+                             level_2 = effects.level2[1:n],
+                             feature = effects.f[1:n],
+                             grade_level = effects.gr[1:n],
+                             outcome = effects.outcome[1:n],
+                             effect_size = effects.sorted[1:n],
+                             raw_diffs = raw_diffs[1:n])
+  
+  output.table$level_1 <- as.character(output.table$level_1)
+  output.table$level_2 <- as.character(output.table$level_2)
+  output.table$feature <- as.character(output.table$feature)
+  output.table$outcome <- as.character(output.table$outcome)
+  
+  rownames(output.table) <- NULL
+  
+  #Return table of effect sizes
+  return(output.table)
+  
+}
+
+#End function
+"%nin%" <- function(x, y) !x %in% y #--  x without y
+
+gap.test2 <- function(df, grade, outcome, features, n = 3, sds = NULL, 
+                     comp = FALSE, cut = 50, med = FALSE, outlbl = NULL) {
+  
+  #See if no standard deviations provided
+  if(is.null(sds)){
+    
+    
+    #Notify user
+    message("No standard deviations provided. \n Will use standard deviations calculated from provided dataset.")
     
     #Find standard deviation for each grade
     sds.by.grades <- tapply(df[,outcome], df[,grade],sd)
     
     #Create standard deviation dataframe
     sds <- data.frame(grade_level = names(sds.by.grades),
-                         out = sds.by.grades)
+                      out = sds.by.grades)
     colnames(sds)[1] <- grade
     colnames(sds)[2] <- outcome
     rownames(sds) <- NULL
@@ -80,31 +314,31 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
   
   #Test to see if data is correct class
   if(class(sds[,grade]) != 'integer' | 
-    class(sds[,outcome]) != 'numeric') {
-      
-      #Make example dataframe of sds
-      ex.sds <- data.frame(grade_level = c(3,4,5,6,7,8),
-                           math_ss = c(148.22,145.65,143.06,145.00,128.79,121.22),
-                           rdg_ss = c(132.00,127.53,128.76,123.57,120.79,124.79),
-                           wrtg_ss = c(NA,513.66,NA,NA,514.66,NA))
-      
-      message("Error: Grade level in sds table should be class
+     class(sds[,outcome]) != 'numeric') {
+    
+    #Make example dataframe of sds
+    ex.sds <- data.frame(grade_level = c(3,4,5,6,7,8),
+                         math_ss = c(148.22,145.65,143.06,145.00,128.79,121.22),
+                         rdg_ss = c(132.00,127.53,128.76,123.57,120.79,124.79),
+                         wrtg_ss = c(NA,513.66,NA,NA,514.66,NA))
+    
+    message("Error: Grade level in sds table should be class
             'integer' and standard deviation columns shuld be class 'numeric'.
               Like example below:")
-      
-      print(ex.sds)
-      
-      stop("Either re-format the input to sds or use function without
+    
+    print(ex.sds)
+    
+    stop("Either re-format the input to sds or use function without
            providing standard deviations")
-      
+    
   }#End of conditional
   
   #Convert features to factors
   df[,features] <- lapply(df[,features, drop = FALSE], as.character)
   df[,features] <- lapply(df[,features, drop = FALSE], as.factor)
   
-  #Get all grade levels for the chosen tested subject
-  grades <- sds[!is.na(sds[,outcome]),grade]
+  # Get all grade levels for the chosen tested subject
+  grades <- unique(df[!is.na(df[,outcome]),grade])
   
   #Will store all calculated achievement gaps and effect sizes
   gaps <- vector()
@@ -115,8 +349,8 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
   effects.gr <- vector()
   effects.outcome <- vector()
   mean_diffs <- vector()
-
-    #Stores outcome label, based on user input
+  
+  #Stores outcome label, based on user input
   if(is.null(outlbl)){
     
     #Store label as column name
@@ -220,15 +454,15 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
   effects.outcome <- effects.outcome[order(abs(effects), decreasing = TRUE)]
   mean_diffs <- mean_diffs[order(abs(effects), decreasing = TRUE)]
   
-
- 
+  
+  
   ##If want to show gaps by feature, will make and show plots
   if(comp){
     
     #Initialize
     effects.feature <-vector()
     i <- 1
-  
+    
     #Loop over features
     for(feature in features){
       
@@ -287,9 +521,9 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
       
       #Empty vector
       effects.feature <-vector()
-    
+      
     }#End loop over features
-  
+    
   }#End conditional
   
   #Prints n largest gaps and meaning
@@ -327,7 +561,7 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
                 size=4.5)+
       labs(title = paste0("Top ", n, " standardized difference of medians"),
            caption = expression("Calculation: " ~ frac(Delta ~ scriptstyle(medians), sigma))) + theme_bw()
-                
+    
     
     print(barp)
     
@@ -336,7 +570,7 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
   ##Visualize top 'n' effect sizes
   #Make into dataframe
   plot.df.effect <- data.frame(names <- names(effects.sorted[1:n]),
-                            med.s.eff <- effects.sorted[1:n])
+                               med.s.eff <- effects.sorted[1:n])
   rownames(plot.df.effect) <- NULL
   
   
@@ -370,8 +604,8 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
               size=4.5)+
     labs(title = paste0("Top ", n, " effect sizes"), 
          caption = expression("Calculation: d = " ~ frac(bar(Delta), sigma[pooled]) ~ "\n" ~
-                  "Effect Size = " ~  frac(d, sqrt(d^2 + 4)))) + 
-           theme_bw()
+                                "Effect Size = " ~  frac(d, sqrt(d^2 + 4)))) + 
+    theme_bw()
   
   print(barp)
   
@@ -394,7 +628,8 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
   #Return table of effect sizes
   return(output.table)
   
-}#End function
+}
+
 
 
 #' Cluster standard errors for lm objects
