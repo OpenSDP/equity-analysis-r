@@ -1,4 +1,5 @@
 # Analyzing Equity in Texas Student Outcomes
+
 This repository contains web guides, R code, and sample data to help district
 education data analysts explore gaps in student achievement, specifically along
 lines of race, socioeconomic status, gender, English language learner status,

@@ -1,22 +1,50 @@
 ---
-title: "Texas Equity Metrics"
+title: "Student Assessment Equity Metrics"
 author: "Dashiell Young-Saver, Jared Knowles"
 date: "Jun 30, 2018"
 output: 
   html_document:
     theme: simplex
-    css: ../docs/styles.css
+    css: styles.css
     highlight: NULL
     keep_md: true
     toc: true
     toc_depth: 3
     toc_float: true
     number_sections: false
+    includes:
+      in_header: zz-sdp_ga.html
 ---
 
 # Creating Equity Metrics
-*Using Texas state testing data files*
-*Programmed in R*
+
+In this guide, you will use data visualization and descriptive statistics to
+investigate equity in student testing outcomes along lines of race, income,
+gender, learning differences, English proficiency, and migrant status.
+
+### Objective
+
+In this guide, you will use data visualization and descriptive statistics to
+investigate equity in student testing outcomes along lines of race, income,
+gender, learning differences, English proficiency, and migrant status.
+
+### Using this Guide
+
+This guide utilizes mock data from Texas's standardized exams (STAAR test,
+grades 3-8). Therefore, Texas districts can use this code to directly analyze
+the testing data files they have received from the Texas Education Agency.
+However, the code can be adapted to any other state or district context in which
+student testing outcomes are analyzed.
+
+Once you have identified analyses that you want to try to replicate or modify,
+click the "Download" buttons to download R code and sample data. You can make
+changes to the charts using the code and sample data, or modify the code to work
+with your own data. If you are familiar with GitHub, you can click "Go to
+Repository" and clone the entire repository to your own computer.
+
+Go to the Participate page to read about more ways to engage with the OpenSDP
+community or reach out for assistance in adapting this code for your specific
+context.
 
 ## Getting Started
 
@@ -42,13 +70,13 @@ repository to run this code.
 ```{r knitrSetup, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE, comment=NA}
 # Set options for knitr
 library(knitr)
-knitr::opts_chunk$set(comment=NA, warning=FALSE, echo=TRUE,
+knitr::opts_chunk$set(comment = NA, warning = FALSE, echo = TRUE,
                       root.dir = normalizePath("../"),
-                      error=FALSE, message=FALSE, fig.align='center',
-                      fig.width=6, fig.height=6, dpi = 144, 
-                      fig.path = "../figure/E_", 
-                      cache.path = "../cache/E_")
-options(width=80)
+                      error = FALSE, message = FALSE, fig.align = 'center',
+                      fig.width = 6, fig.height = 6, dpi = 144, 
+                      fig.path = "../figure/equity_", 
+                      cache.path = "../cache/equity_")
+options(width = 100)
 ```
 
 
@@ -58,29 +86,6 @@ options(width=80)
 </div>
 </div>
 
-### Objective
-
-In this guide, you will use data visualization and descriptive statistics to
-investigate equity in student testing outcomes along lines of race, income,
-gender, learning differences, English proficiency, and migrant status.
-
-### Using this Guide
-
-This guide utilizes mock data from Texas's standardized exams (STAAR test,
-grades 3-8). Therefore, Texas districts can use this code to directly analyze
-the testing data files they have received from the Texas Education Agency.
-However, the code can be adapted to any other state or district context in which
-student testing outcomes are analyzed.
-
-Once you have identified analyses that you want to try to replicate or modify,
-click the "Download" buttons to download R code and sample data. You can make
-changes to the charts using the code and sample data, or modify the code to work
-with your own data. If you are familiar with GitHub, you can click "Go to
-Repository" and clone the entire repository to your own computer.
-
-Go to the Participate page to read about more ways to engage with the OpenSDP
-community or reach out for assistance in adapting this code for your specific
-context.
 
 ### About the Data
 
@@ -152,9 +157,23 @@ source("../R/functions.R")
 
 ```
 
+This guide uses three pieces of data: 
+
+- `test_data` - synthetic student-level assessment data structured in the format used by the 
+Texas Education Agency data download files
+- `sd_table` - a data.frame containing the assessment score standard deviations for grade 3-8 
+state assessments in Texas in mathematics and reading and writing
+- `prof_lev` - a data.frame containing the proficiency levels for the TEA accountability system for 
+each subject and grade. This includes score cut-offs for "approaching," "meets," and
+"masters" on its state tests (as well as the ceiling and floor). Including proficiency levels will be helpful for
+the visualizations included below, in order to give the viewer a sense of scale
+and a sense of score quality. The user can adjust these proficiency levels, 
+depending on context. 
+
+
 ```{r loaddataset, eacho=FALSE}
-# // Step 1: Read in csv file of our dataset, naming it "texas_data"
-texas_data <- read.csv("../data/synth_texas.csv")  
+# // Step 1: Read in csv file of our dataset, naming it "test_data"
+test_data <- read.csv("../data/synth_texas.csv")  
 
 # // Step 2 (Optional): Read in file containing state-wide standard deviations for standardized tests
 sd_table <- read.csv("../data/sd_table.csv")
@@ -185,12 +204,6 @@ prof_lev$score <- c(1360, 1467, 1500, 1536, 1575, 1595,
                   1555, 1633, 1667, 1718, 1753, 1783)
 ```
 
-Note that the above code chunk also stores proficiency levels set by the state
-of Texas, which include score cut-offs for "approaching," "meets," and
-"masters" on its state tests. Including proficiency levels will be helpful for
-the visualizations included below, in order to give the viewer a sense of scale
-and a sense of score quality. The user can adjust these proficiency levels, 
-depending on context. 
 
 ### About the Analyses
 
@@ -227,25 +240,76 @@ analysis.
 
 **Required Analysis File Variables:**
 
-- `grade_level` 
-- `school_code` 
-- `male`        
-- `race_ethnicity` 
-- `eco_dis`      
-- `title_1`     
-- `migrant`     
-- `lep`
-- `iep`
-- `rdg_ss`
-- `math_ss`
-- `wrtg_ss`
-- `composition`
+- `grade_level` - an integer representing the grade level of the assessment
+- `school_code` - an integer representing the unique numeric identifier for the school
+- `male`        - a factor with levels correspdongin to each student sex (here "M", "F")
+- `race_ethnicity` - a factor with levels corresponding to each student race category (here "A", "B", "D", "H", "W", "N", "W")
+- `eco_dis`      - an integer with two values 0/1 corresponding to student economic disadvantage status
+- `title_1`      -
+- `migrant`      - an integer with two values 0/1 corresponding to student status as a migrant student
+- `lep`          - an integer with two values 0/1 corresponding to student status of being limited-English proficient
+- `iep`          - an integer with two values 0/1 corresponding to student status of having an IEP
+- `rdg_ss`       - a numeric representing the scale score the student received on the reading assessment
+- `math_ss`      - a numeric representing the scale score the student received on the mathematics assessment
+- `wrtg_ss`     - a numeric representing the scale score the student received on the writing assessment
+- `composition`  - a numeric representing the scale score the student received on the composition assessment
+
+Further details on the data elements used in this guide and their definitions in the `man` subfolder 
+which contains further details and documentation on the file specifications for TEA assessment data.
 
 **Ask Yourself**
 
-
 - How do different study sub-populations in your organization perform on standardized tests?
 - Which differences do you want to explore further?
+
+**Analytic Technique:** Review your data using exploratory graphs to verify the data is imported 
+correctly:
+
+
+Let's make a few quick graphs to visually inspect our data. Here we use density plots to compare 
+the overall distribution of test scores between student groups. It's always good to start with 
+some graphical exploration of the data to verify the data is correct and to orient ourselves to 
+the scale of the data. 
+
+```{r densityexplroation}
+ggplot(test_data) + aes(x = rdg_ss, group = male) + 
+  geom_density() + 
+  facet_wrap(~grade_level) + 
+  labs(x = "Reading Score", title = "Reading Scores by Grade and Sex") + 
+  theme_bw()
+
+ggplot(test_data) + aes(x = rdg_ss, group = race_ethnicity) + 
+  geom_density() + 
+  facet_wrap(~grade_level) + 
+  labs(x = "Reading Score", title = "Reading Scores by Grade and Race") + 
+  theme_bw()
+
+ggplot(test_data) + aes(x = math_ss, group = race_ethnicity) + 
+  geom_density() + 
+  facet_wrap(~grade_level) + 
+  labs(x = "Math Score", title = "Math Scores by Grade and Race") + 
+  theme_bw()
+
+ggplot(test_data) + aes(x = math_ss, group = male) + 
+  geom_density() + 
+  facet_wrap(~grade_level) + 
+  labs(x = "Math Score", title = "Math Scores by Grade and Race") + 
+  theme_bw()
+
+```
+
+For a more direct comparison of means we can use boxplots:
+
+```{r boxplot}
+ggplot(test_data) + aes(y = rdg_ss, x = race_ethnicity) + 
+  geom_boxplot() + 
+  facet_wrap(~grade_level) + 
+  labs(x = "Reading Score", title = "Reading Scores by Grade and Race") + 
+  theme_bw()
+```
+
+
+
 
 **Analytic Technique:** Identify major achievement gaps within the student
 population. To achieve this, we use the SDP function `gap.test`, which is
@@ -285,7 +349,7 @@ measured.
 
 ```{r GapTest, echo=TRUE}
 #Use 'gap.test' function to explore most major gaps in student population
-gap.table <- gap.test(df = texas_data,
+gap.table <- gap.test2(df = test_data,
                     grade = "grade_level",
                     outcome = "math_ss",
                     features = c('eco_dis','lep','iep','race_ethnicity','male'),
@@ -373,7 +437,7 @@ for(i in 1:n.gaps){
   grade <- gaps[i,"grade_level"]
   subject <- gaps[i,"outcome"]
   
-  data = texas_data[texas_data$grade_level == grade,] #Isolates grade level
+  data = test_data[test_data$grade_level == grade,] #Isolates grade level
   print(paste("Grade level:",grade,", Outcome:",labels[subject]))
   a <- summary(data[,subject]) #Summary stats table for grade and test
   print(a) #Print summary table
@@ -400,7 +464,7 @@ for(i in 1:n.gaps){
   grade <- gaps[i,"grade_level"]
   subject <- gaps[i,"outcome"]
   
-  data = texas_data[texas_data$grade_level == grade,] #Isolates 5th and 8th graders
+  data = test_data[test_data$grade_level == grade,] #Isolates 5th and 8th graders
   
     #Set variables and parameters for our boxplot
     p <- ggplot(data, aes(x=as.factor(grade_level), y=data[,subject])) + 
@@ -462,7 +526,7 @@ for(i in 1:n.gaps){
   lvl2 <- gaps[i,"level_2"]
   
   #Isolate data for grade and gap demographics
-  data = texas_data[texas_data$grade_level == grade,] #Isolates grade level
+  data = test_data[test_data$grade_level == grade,] #Isolates grade level
   data = data[data[,dem] == lvl1 | data[,dem] == lvl2, ]#Isolates demographic groups
   
   #Print subject and grade level
@@ -500,7 +564,7 @@ for(i in 1:n.gaps){
   lvl1 <- gaps[i,"level_1"]
   lvl2 <- gaps[i,"level_2"]
   
-  data = texas_data[texas_data$grade_level == grade,] #Isolates grade level
+  data = test_data[test_data$grade_level == grade,] #Isolates grade level
   data = data[data[,dem] == lvl1 | data[,dem] == lvl2, ]#Isolates demographic groups
       
   #Set variables and parameters for our boxplot
@@ -597,7 +661,7 @@ for(i in 1:n.gaps){
   lvl1 <- gaps[i,"level_1"]
   lvl2 <- gaps[i,"level_2"]
   
-  data = texas_data[texas_data$grade_level == grade,] #Isolates grade level
+  data = test_data[test_data$grade_level == grade,] #Isolates grade level
   data = data[data[,dem] == lvl1 | data[,dem] == lvl2, ]#Isolates demographic groups
   res <- levels(as.factor(data[,group.by])) #Different levels of 'group.by' to explore
 
@@ -650,7 +714,7 @@ for(i in 1:n.gaps){
   lvl1 <- gaps[i,"level_1"]
   lvl2 <- gaps[i,"level_2"]
   
-  data = texas_data[texas_data$grade_level == grade,] #Isolates grade level
+  data = test_data[test_data$grade_level == grade,] #Isolates grade level
   data = data[data[,dem] == lvl1 | data[,dem] == lvl2, ]#Isolates demographic groups
   res <- levels(as.factor(data[,group.by])) #Different levels of 'group.by' to explore
    
@@ -699,7 +763,7 @@ for(i in 1:n.gaps){
   lvl1 <- gaps[i,"level_1"]
   lvl2 <- gaps[i,"level_2"]
   
-  data = texas_data[texas_data$grade_level == grade,] #Isolates grade level
+  data = test_data[test_data$grade_level == grade,] #Isolates grade level
   data = data[data[,dem] == lvl1 | data[,dem] == lvl2, ]#Isolates demographic groups
   res <- levels(as.factor(data[,group.by])) #Different levels of 'group.by' to explore
   
@@ -798,7 +862,7 @@ for(i in 1:n.gaps){
   lvl1 <- gaps[i,"level_1"]
   lvl2 <- gaps[i,"level_2"]
   
-  data = texas_data[texas_data$grade_level == grade,] #Isolates grade level
+  data = test_data[test_data$grade_level == grade,] #Isolates grade level
   sd.within <- sd(data[,subject]) #Stores standard deviation for subject and grade level
   data = data[data[,dem] == lvl1 | data[,dem] == lvl2, ]#Isolates demographic groups
     
@@ -949,7 +1013,7 @@ for(i in 1:n.gaps){
     
   }#End of conditional
   
-  data = texas_data[texas_data$grade_level == grade,] #Isolates grade level
+  data = test_data[test_data$grade_level == grade,] #Isolates grade level
   data = data[data[,dem] == target, ]#Isolates target demographic
     
   #Finds overall district median
@@ -1071,7 +1135,7 @@ for(i in 1:n.gaps){
   }#End of conditional
   
   #Isolates grade level
-  data = texas_data[texas_data$grade_level == grade,]
+  data = test_data[test_data$grade_level == grade,]
   
   #Calculates district median and first quartile scores for test
   dist.median <- median(data[,subject]) #district median
@@ -1241,7 +1305,7 @@ for(i in 1:n.gaps){
   }#End of conditional
   
   # // Step 2: Isolate grade level
-  data = texas_data[texas_data$grade_level == grade,] #Isolates grade level
+  data = test_data[test_data$grade_level == grade,] #Isolates grade level
   
   # // Step 3: Recode variables and create cluster variable
   data[,dem] <- as.factor(data[,dem])
