@@ -1,5 +1,4 @@
 # Packages
-library(tidyverse)
 ##Begin function
 #' Gap Test
 #' @description Explores dataset to find widest achievement gaps
@@ -11,28 +10,36 @@ library(tidyverse)
 #' @param features vector of features in dataset where testing for gaps 
 #' (class: character)
 #' @param n set 'n' largest gaps the function outputs at the end 
-#' (class: integer, default: 3)
+#' (class: integer, default: 5)
 #' @param sds dataframe containing the standard deviations for all outcomes 
 #' (class: data frame)
 #' @param comp indicator to output additional comparative gap graphics 
 #' (class: boolean, default: FALSE)
 #' @param cut minimum number of students for level in a gap (class: integer, 
 #' default = 50)
-#' @param med indicator if would like function to also output top standardized 
-#' difference of medians (class: boolean, default: FALSE)
-#' @param outlbl label for outcome to print on graphs  
-#' (class: character, default: NULL)
+#' @param med indicator if would like function to compute standardized 
+#' difference of medians instead of means (class: boolean, default: FALSE)
+#' @param verbose (class:boolean, default: FALSE) indicator of whether the 
+#' user would like additional details for each group comparison including 
+#' sample sizes and alternative effect size calculations (Hedge's g and 
+#' correlation coefficient translation of Cohen's d).
 #' @author Dashiell Young-Saver
 #' @author OpenSDP
+#' 
+#' 
+#' @details Th
+#' @references 
 #'
-#' @return Outputs list of largest largest achievement gaps 
-#' (computed by effect size). Prints visuals of largest achievement gaps
+#' @return Outputs a data.frame containing several different metrics for 
+#' comparing the differences between the groups including Cohen's effect size, 
+#' Hedges g, and the correlation coefficient. Where necessary, small sample 
+#' size corrections are applied. 
+#' 
 #' @export
 #'
 #' @examples
-gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL, 
-                     comp = FALSE, cut = 50, med = FALSE, outlbl = NULL) {
-  
+gap.test <- function(df, grade, outcome, features, n = 5, sds = NULL, 
+                     comp = FALSE, cut = 50, med = FALSE, verbose = FALSE) {
   # Check for user-provided standard deviations
   if (is.null(sds)) {
     # Notify user
@@ -96,33 +103,28 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
       
   } #End of conditional
   
-  #Convert features to factors
+  # Convert features to factors
   df[,features] <- lapply(df[,features, drop = FALSE], as.character)
   df[,features] <- lapply(df[,features, drop = FALSE], as.factor)
   
-  #Get all grade levels for the chosen tested subject
+  # Get all grade levels for the chosen tested subject
   grades <- unique(df[!is.na(df[,outcome]),grade])
   
   #Will store all calculated achievement gaps and effect sizes
-  gaps <- vector()
-  effects <- vector()
-  effects.level1 <- vector()
-  effects.level2 <- vector()
-  effects.f <- vector()
-  effects.gr <- vector()
-  effects.outcome <- vector()
-  raw_diffs <- vector()
-
-    #Stores outcome label, based on user input
-  if(is.null(outlbl)){
-    
-    #Store label as column name
-    outlbl <- outcome
-  } else if(class(outlbl)!="character"){
-    
-    stop("outlbl must be of type 'character'")
-  }
   
+  output.table <- data.frame(level_1 = NULL,
+                             lvl1_n = NULL,
+                             level_2 = NULL,
+                             lvl2_n = NULL, 
+                             feature = NULL,
+                             grade_level = NULL,
+                             outcome = NULL,
+                             effect_size = NULL,
+                             raw_diffs = NULL, 
+                             hedgesg = NULL,
+                             corr_coef = NULL,
+                             stringsAsFactors = FALSE)
+
   #Loop over grade levels
   for(gr in grades){
     
@@ -139,26 +141,31 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
       lvl <- levels(dat.grade[,feature])
       
       #Cut levels if cut point given
-      if(!is.null(cut)){
-        
-        #Table of factor values
-        lvl.table <- table(dat.grade[,feature])
-        
-        #Initialize vector of levels to cut
-        lvl <- names(lvl.table[lvl.table >= cut])
-        
-        #See if any levels left
-        if(length(lvl) < 2){
-          # Error
-          stop(paste("Cut point too high: no data left to compare for",
-                     feature,gr,outcome))
-          
-        }#End inner conditional
-        
-      }#End outer conditional
+      # if(!is.null(cut)){
+      #   
+      #   #Table of factor values
+      #   lvl.table <- table(dat.grade[,feature])
+      #   
+      #   #Initialize vector of levels to cut
+      #   lvl <- names(lvl.table[lvl.table >= cut])
+      #   
+      #   #See if any levels left
+      #   if(length(lvl) < 2){
+      #     # Change to warning
+      #     # Change language
+      #     warning(paste("Cut point too high: no data left to compare for",
+      #                feature,gr,outcome))
+      #     
+      #   }#End inner conditional
+      #   
+      # }#End outer conditional
+      
+      lvl <- levels(dat.grade[,feature])
+      lvl.table <- table(dat.grade[,feature])
+      lvl <- names(lvl.table)
       
       #Get matrix of all combos of levels
-      com.lvl <- combn(lvl,2)
+      com.lvl <- combn(lvl, 2)
       
       #Loop over combinations
       for(i in 1:dim(com.lvl)[2]){
@@ -177,89 +184,81 @@ gap.test <- function(df, grade, outcome, features, n = 3, sds = NULL,
           gap <- (mean(level1.data) - mean(level2.data))/sd.gr
         }
         #Append gap to list and name in
-        gaps <- append(gaps,gap,length(gaps))
-        names(gaps)[length(gaps)] <- paste(level1,"-",level2,", ",
-                                           feature,'\n',"Grade ",gr,
-                                           ", ",outcome, sep="")
         
-        #Append mean difference to list
         if(med) {
           raw_diff <- median(level1.data) - median(level2.data)
-          raw_diffs <- append(raw_diffs, raw_diff, length(raw_diffs))
+          # raw_diffs <- append(raw_diffs, raw_diff, length(raw_diffs))
+          # sd.gr is either user-specified or calculated from observed data
+          d <- raw_diff / sd.gr
         } else {
           raw_diff <- mean(level1.data) - mean(level2.data)
-          raw_diffs <- append(raw_diffs, raw_diff, length(raw_diffs))
+          # raw_diffs <- append(raw_diffs, raw_diff, length(raw_diffs))
+          d <- raw_diff / sd.gr
         }
         
-        # 
-        #Measure the effect size (r)
-        var.1 <- var(level1.data)
-        var.2 <- var(level2.data)
-        sd.pooled <- sd(c(var.1, var.2))
-        # Effect size is measured by mean or median based on control
-        # Calculate delta and standardize using pooled sd
-        if(med) {
-          d <- (median(level1.data) - median(level2.data))/sd.pooled
-        } else {
-          d <- (mean(level1.data) - mean(level2.data))/sd.pooled
-        }
-        # Effect size adjustment for difference
+        
+        # Correlation coefficient
         r <- d/sqrt(d^2+4)
+        # hedges g
+        # g <- d / sqrt(length(c(level1.data, level2.data)) / df)
         
-        #Append effect size and information to lists and name
-        effects <- append(effects,r,length(effects))
-        names(effects)[length(effects)] <- paste(level1,"-",level2,", ",
-                                                 feature,'\n',"Grade ",gr,
-                                                 ", ",outlbl, sep="")
-        effects.level1 <- append(effects.level1, level1, length(effects.level1))
-        effects.level2 <- append(effects.level2, level2, length(effects.level2))
-        effects.f <- append(effects.f, feature, length(effects.f))
-        effects.gr <- append(effects.gr, gr, length(effects.gr))
-        effects.outcome <- append(effects.outcome, outcome, length(effects.outcome))
-        
-        
+        # TODO: Tidy this bit up
+        output.table.tmp <- data.frame(level_1 = level1,
+                                       lvl1_n = length(level1.data),
+                                   level_2 = level2,
+                                   lvl2_n = length(level2.data), 
+                                   feature = feature,
+                                   grade_level = gr,
+                                   outcome = outcome,
+                                   effect_size = d,
+                                   raw_diffs = raw_diff, 
+                                   hedgesg = NA,
+                                   corr_coef = NA,
+                                   stringsAsFactors = FALSE)
+        output.table <- rbind(output.table, output.table.tmp)
       } #End loop over combinations
       
     } #End loop over features
     
   } #End loop over grade levels
   
-  #Sort gaps and effect sizes largest to smallest in magnitude
-  sorted.gaps <- gaps[order(abs(gaps), decreasing=TRUE)]
-  effects.sorted <- effects[order(abs(effects), decreasing = TRUE)]
-  effects.level1 <- effects.level1[order(abs(effects), decreasing = TRUE)]
-  effects.level2 <- effects.level2[order(abs(effects), decreasing = TRUE)]
-  effects.f <- effects.f[order(abs(effects), decreasing = TRUE)]
-  effects.gr <- effects.gr[order(abs(effects), decreasing = TRUE)]
-  effects.outcome <- effects.outcome[order(abs(effects), decreasing = TRUE)]
-  raw_diffs <- raw_diffs[order(abs(effects), decreasing = TRUE)]
+  if (missing(n)) {
+    n <- ifelse(nrow(output.table) < 10, 
+                nrow(output.table), 10)
+    message(paste0("No cutoff provided, setting it to ", n))
+  } else {
+    n <- ifelse(n > nrow(output.table), nrow(output.table), 
+                n)
+  }
   
-  #Prints n largest gaps and meaning
-  #Standardized difference of medians
-  #Will only do this if user asks
-  
-  n <- ifelse(n > length(effects.f), length(effects.f), 
-              n)
-  
-  #Output a table of groups with largest effect sizes
-  output.table <- data.frame(level_1 = effects.level1[1:n],
-                             level_2 = effects.level2[1:n],
-                             feature = effects.f[1:n],
-                             grade_level = effects.gr[1:n],
-                             outcome = effects.outcome[1:n],
-                             effect_size = effects.sorted[1:n],
-                             raw_diffs = raw_diffs[1:n])
+  if(!is.null(cut)) {
+    output.table$effect_size[output.table$lvl1_n < cut | 
+                               output.table$lvl2_n < cut] <- NA
+    output.table$raw_diffs[output.table$lvl1_n < cut | 
+                               output.table$lvl2_n < cut] <- NA
+    output.table$hedgesg[output.table$lvl1_n < cut | 
+                               output.table$lvl2_n < cut] <- NA
+    output.table$corr_coef[output.table$lvl1_n < cut | 
+                           output.table$lvl2_n < cut] <- NA
+  }
   
   output.table$level_1 <- as.character(output.table$level_1)
   output.table$level_2 <- as.character(output.table$level_2)
   output.table$feature <- as.character(output.table$feature)
   output.table$outcome <- as.character(output.table$outcome)
+  output.table <- output.table[order(abs(output.table$effect_size), 
+                                     decreasing = TRUE), ]
+  if(!verbose) {
+    out_vars <- c("level_1", "level_2", "feature", "grade_level", 
+                  "outcome", "effect_size", "raw_diffs")
+  } else {
+    out_vars <- names(output.table)
+  }
+  
   
   rownames(output.table) <- NULL
-  
   #Return table of effect sizes
-  return(output.table)
-  
+  return(output.table[1:n, out_vars])
 }
 
 #End function
@@ -723,4 +722,50 @@ add_ref_levels <- function(plot, prof_levels, direction = c("horizontal", "verti
   }
   
   return(plot)
+}
+
+
+
+#' Plot the results of a gap test table
+#'
+#' @param df 
+#'
+#' @return A ggplot2 plot
+#' @export
+#'
+#' @examples
+autoplot.gap_test <- function(df) {
+  df$comp_name <- paste(df$level_1, df$level_2, sep = "-")
+  
+  ylims <- c(min(df$effect_size), max(df$effect_size))
+  if (ylims[1] > -0.1) {
+    ylims[1] <- -0.1
+  }
+  if (ylims[2] < 0.1) {
+    ylims[2] <- 0.1
+  }
+  
+  # names(gaps)[length(gaps)] <- paste(level1,"-",level2,", ",
+  #                                    feature,'\n',"Grade ",gr,
+  #                                    ", ",outcome, sep="")
+  # 
+  barp <- ggplot(df, aes(x= reorder(comp_name, abs(effect_size)), 
+                         y = effect_size), group = grade_level) +
+    geom_bar(position="dodge",stat="identity") +
+    scale_x_discrete(name = "Comparison") +
+    scale_y_continuous(name = "Effect Size", 
+                       limits = ylims) +
+    theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5, size=8))+
+    geom_hline(yintercept=0.1, linetype="solid", 
+               color = "red", size=1) +
+    geom_hline(yintercept=-0.1, linetype="solid", 
+               color = "red", size=1) +
+    geom_hline(yintercept = 0, linetype = 2, color = "blue", 
+               size = 1) + 
+    labs(title = paste0("Top ", nrow(df), " gap effect sizes"), 
+         caption = expression("Calculation: d = " ~ frac(bar(Delta), sigma[pooled]) ~ "\n" ~
+                                "Effect Size = " ~  frac(d, sqrt(d^2 + 4)))) + 
+    facet_grid(~feature) + theme_bw()
+  print(barp)
+  
 }
