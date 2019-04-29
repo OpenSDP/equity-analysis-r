@@ -37,7 +37,7 @@
 #'
 #' @examples
 gap.test <- function(df, grade, outcome, features, n = 5, sds = NULL, 
-                     cut = 50, med = FALSE, verbose = FALSE) {
+                     cut = 50, med = FALSE, verbose = FALSE, effect_size = "cohens_d") {
   # Check for user-provided standard deviations
   if (is.null(sds)) {
     # Notify user
@@ -167,7 +167,7 @@ gap.test <- function(df, grade, outcome, features, n = 5, sds = NULL,
         hedges_g <- raw_diff / hedges_g_sd(level1.data, level2.data)
         
         if (length(level1.data) < 50 | length(level2.data) < 50) {
-          messsage("Applying small sample-size correction to Hedges-g")
+          message("Applying small sample-size correction to Hedges-g")
           hedges_g <- adjust_hedges_g(raw_diff, level1.data, level2.data)
         }
         
@@ -179,9 +179,9 @@ gap.test <- function(df, grade, outcome, features, n = 5, sds = NULL,
                                    feature = feature,
                                    grade_level = gr,
                                    outcome = outcome,
-                                   raw_diffs = raw_diff, 
+                                   mean_diff = raw_diff, 
                                    cohens_d = cohens_d,
-                                   hedgesg = hedges_g,
+                                   hedges_g = hedges_g,
                                    corr_coef = NA,
                                    stringsAsFactors = FALSE)
         output.table <- rbind(output.table, output.table.tmp)
@@ -203,9 +203,9 @@ gap.test <- function(df, grade, outcome, features, n = 5, sds = NULL,
   if (!is.null(cut)) {
     output.table$cohens_d[output.table$lvl1_n < cut | 
                                output.table$lvl2_n < cut] <- NA
-    output.table$raw_diffs[output.table$lvl1_n < cut | 
+    output.table$mean_diff[output.table$lvl1_n < cut | 
                                output.table$lvl2_n < cut] <- NA
-    output.table$hedgesg[output.table$lvl1_n < cut | 
+    output.table$hedges_g[output.table$lvl1_n < cut | 
                                output.table$lvl2_n < cut] <- NA
     output.table$corr_coef[output.table$lvl1_n < cut | 
                            output.table$lvl2_n < cut] <- NA
@@ -218,8 +218,9 @@ gap.test <- function(df, grade, outcome, features, n = 5, sds = NULL,
   output.table <- output.table[order(abs(output.table$cohens_d), 
                                      decreasing = TRUE), ]
   if (!verbose) {
+    output.table$effect_size <- output.table[, effect_size]
     out_vars <- c("level_1", "level_2", "feature", "grade_level", 
-                  "outcome", "cohens_d", "raw_diffs")
+                  "outcome", "effect_size", "mean_diff")
   } else {
     out_vars <- names(output.table)
   }
@@ -372,7 +373,7 @@ adjust_hedges_g <- function(diff, x, y) {
 #' @export
 #'
 #' @examples
-autoplot.gap_test <- function(df, what = "cohens_d") {
+autoplot.gap_test <- function(df, what = "effect_size") {
   df$comp_name <- paste(df$level_1, df$level_2, sep = "-")
   df$effect_size <- df[, what]
   

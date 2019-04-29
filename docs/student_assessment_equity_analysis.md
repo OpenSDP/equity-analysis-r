@@ -248,10 +248,6 @@ analysis.
 Further details on the data elements used in this guide and their definitions in the `man` subfolder 
 which contains further details and documentation on the file specifications for TEA assessment data.
 
-**Ask Yourself**
-
-- How do different study sub-populations in your organization perform on standardized tests?
-- Which differences do you want to explore further?
 
 **Analytic Technique:** Review your data using exploratory graphs to verify the data is imported 
 correctly:
@@ -271,7 +267,7 @@ ggplot(test_data) + aes(x = rdg_ss, group = male) +
   theme_bw()
 ```
 
-<img src="../figure/equity_densityexplroation-1.png" style="display: block; margin: auto;" />
+<img src="../figure/equity_densityexploration-1.png" style="display: block; margin: auto;" />
 
 ```r
 ggplot(test_data) + aes(x = rdg_ss, group = race_ethnicity) + 
@@ -281,7 +277,7 @@ ggplot(test_data) + aes(x = rdg_ss, group = race_ethnicity) +
   theme_bw()
 ```
 
-<img src="../figure/equity_densityexplroation-2.png" style="display: block; margin: auto;" />
+<img src="../figure/equity_densityexploration-2.png" style="display: block; margin: auto;" />
 
 ```r
 ggplot(test_data) + aes(x = math_ss, group = race_ethnicity) + 
@@ -291,7 +287,7 @@ ggplot(test_data) + aes(x = math_ss, group = race_ethnicity) +
   theme_bw()
 ```
 
-<img src="../figure/equity_densityexplroation-3.png" style="display: block; margin: auto;" />
+<img src="../figure/equity_densityexploration-3.png" style="display: block; margin: auto;" />
 
 ```r
 ggplot(test_data) + aes(x = math_ss, group = male) + 
@@ -301,7 +297,7 @@ ggplot(test_data) + aes(x = math_ss, group = male) +
   theme_bw()
 ```
 
-<img src="../figure/equity_densityexplroation-4.png" style="display: block; margin: auto;" />
+<img src="../figure/equity_densityexploration-4.png" style="display: block; margin: auto;" />
 
 For a more direct comparison of means we can use boxplots:
 
@@ -316,13 +312,27 @@ ggplot(test_data) + aes(y = rdg_ss, x = race_ethnicity) +
 
 <img src="../figure/equity_boxplot-1.png" style="display: block; margin: auto;" />
 
+**Ask Yourself**
 
+- Does the data look as you would expect? Does the data appear to be imported and organized 
+correctly?
+- How do different study sub-populations in your organization perform on standardized tests?
+- Which differences do you want to explore further?
+
+### Gap Analysis
+
+**Purpose:** Descriptive statistics give your agency a quick snapshot of current
+achievement gaps among students, identifying areas for further investigation and
+analysis.
 
 
 **Analytic Technique:** Identify major achievement gaps within the student
 population. To achieve this, we use the SDP function `gap.test`, which is
 defined in the repository's `R` folder. You can review the source code of this 
 function there. For now, here is the usage information:
+
+
+**Required Statistical Functions:**
 
 `gap.test`: Visualizes and quantifies gaps in student performance across
 demographic markers.
@@ -358,17 +368,14 @@ measured.
 
 ```r
 #Use 'gap.test' function to explore most major gaps in student population
-gap.table <- gap.test2(df = test_data,
+gap.table <- gap.test(df = test_data,
                     grade = "grade_level",
                     outcome = "math_ss",
                     features = c('eco_dis','lep','iep','race_ethnicity','male'),
                     sds = sd_table,
                     n = 3,
-                    cut = 120,
-                    outlbl = "math score gap")
+                    cut = 120)
 ```
-
-<img src="../figure/equity_GapTest-1.png" style="display: block; margin: auto;" />
 
 The `gap.test` output shows us that the top 3 gaps, in terms of effect size, are
 for 3rd, 4th, and 5th grade math scores between gender groups. The effect sizes
@@ -380,12 +387,19 @@ any other gap based in racial differences, socioeconomic differences,
 differences in English proficiency status, or differences in special education
 status.
 
+
+```r
+autoplot.gap_test(gap.table)
+```
+
+<img src="../figure/equity_unnamed-chunk-1-1.png" style="display: block; margin: auto;" />
+
+
 The function also outputs a table with each effect size, mean difference (to
 show the gap on the scale of the test), and demographic information of the gap
 (groups affected, grade level, test subject). We have stored this as
 `gap.table`. If wanted, the user could set the inputs (see usage information
-above) of the function such that it outputs additional graphics, comparing gaps
-within each data set feature. Here, we output one graphic for simplicity.
+above) of the function such that it outputs additional effect size calculations.
 
 Measuring the gaps in terms of effect size allows us to compare gaps across
 grade levels and subject areas, as effect size standardizes the gap by taking
@@ -401,8 +415,10 @@ analyses can be done across grade levels.
 One technical note: Sometimes the distributions of test scores can be skewed,
 making the median a more advantageous measure of central tendency (since it is
 less sensitive to outliers and skew). In these cases, set the `gap.test`
-function's `med` parameter to `TRUE` to output a plot that shows the top 3 gaps
+function's `med` parameter to `TRUE` to output a table that identifies the top 3 gaps
 as measured by the standardized median difference.
+
+### Investigate Individual Gaps
 
 Since our largest effect size gap was the grade 3 gender gap on the standardized
 math test, we will explore that gap further. For demonstration purposes, we will
@@ -625,7 +641,7 @@ for(i in 1:n.gaps){
 } #End loop over gap number
 ```
 
-<img src="../figure/equity_VisualizeEcoDis-1.png" style="display: block; margin: auto;" /><img src="../figure/equity_VisualizeEcoDis-2.png" style="display: block; margin: auto;" />
+<img src="../figure/equity_VisualizeGenderGap-1.png" style="display: block; margin: auto;" /><img src="../figure/equity_VisualizeGenderGap-2.png" style="display: block; margin: auto;" />
 
 As we predicted, the distributions have similar shapes, with the male
 distribution shifted to higher scores than the female distribution. When broken
