@@ -99,8 +99,24 @@ test_that("Row counts are right", {
 # Test user specified parameters and expected behavior
 context("Test function parameters have desired effect")
 
+test_that("Test cutoff and n count parameters work", {
+  
+  
+  
+})
+
+
 # 
 context("Test numeric accuracy of gap test calculations")
+
+
+
+test_that("Test cutoff and n count parameters work", {
+  
+  
+  
+})
+
 
 
 # 

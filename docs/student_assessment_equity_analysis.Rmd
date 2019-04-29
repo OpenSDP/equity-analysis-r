@@ -257,10 +257,6 @@ analysis.
 Further details on the data elements used in this guide and their definitions in the `man` subfolder 
 which contains further details and documentation on the file specifications for TEA assessment data.
 
-**Ask Yourself**
-
-- How do different study sub-populations in your organization perform on standardized tests?
-- Which differences do you want to explore further?
 
 **Analytic Technique:** Review your data using exploratory graphs to verify the data is imported 
 correctly:
@@ -271,7 +267,7 @@ the overall distribution of test scores between student groups. It's always good
 some graphical exploration of the data to verify the data is correct and to orient ourselves to 
 the scale of the data. 
 
-```{r densityexplroation}
+```{r densityexploration}
 ggplot(test_data) + aes(x = rdg_ss, group = male) + 
   geom_density() + 
   facet_wrap(~grade_level) + 
@@ -308,13 +304,27 @@ ggplot(test_data) + aes(y = rdg_ss, x = race_ethnicity) +
   theme_bw()
 ```
 
+**Ask Yourself**
 
+- Does the data look as you would expect? Does the data appear to be imported and organized 
+correctly?
+- How do different study sub-populations in your organization perform on standardized tests?
+- Which differences do you want to explore further?
+
+### Gap Analysis
+
+**Purpose:** Descriptive statistics give your agency a quick snapshot of current
+achievement gaps among students, identifying areas for further investigation and
+analysis.
 
 
 **Analytic Technique:** Identify major achievement gaps within the student
 population. To achieve this, we use the SDP function `gap.test`, which is
 defined in the repository's `R` folder. You can review the source code of this 
 function there. For now, here is the usage information:
+
+
+**Required Statistical Functions:**
 
 `gap.test`: Visualizes and quantifies gaps in student performance across
 demographic markers.
