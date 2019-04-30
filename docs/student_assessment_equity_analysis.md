@@ -12,6 +12,7 @@ output:
     toc_depth: 3
     toc_float: true
     number_sections: false
+    code_folding: show
     includes:
       in_header: zz-sdp_ga.html
 ---
@@ -22,7 +23,7 @@ In this guide, you will use data visualization and descriptive statistics to
 investigate equity in student testing outcomes along lines of race, income,
 gender, learning differences, English proficiency, and migrant status.
 
-### Objective
+## Objective
 
 In this guide, you will use data visualization and descriptive statistics to
 investigate equity in student testing outcomes along lines of race, income,
@@ -72,12 +73,28 @@ repository to run this code.
 
 <div class="navbar navbar-default navbar-fixed-top" id="logo">
 <div class="container">
-<img src="../img/open_sdp_logo_red.png" style="display: block; margin: 0 auto; height: 115px;">
+<img src="https://opensdp.github.io/assets/images/OpenSDP-Banner_crimson.jpg" style="display: block; margin: 0 auto; height: 115px;">
 </div>
 </div>
 
+#### About the Analyses
 
-### About the Data
+In various contexts, students of different identity markers (race, class,
+gender, English Language Learner status, etc.) may have systematically differing
+educational outcomes. These gaps often present themselves in standardized
+testing data, at the national, state, and local levels. The following analyses
+will assist your organization in seeing where gaps exist and how wide they are,
+in order to inform the conversation about why the gaps exist and what to do
+about them.
+
+#### Giving Feedback on this Guide
+ 
+This guide is an open-source document hosted on GitHub and generated using R
+Markdown. We welcome feedback, corrections, additions, and updates. Please visit
+the OpenSDP equity metrics repository to read our contributor guidelines.
+
+
+## About the Data
 
 The data used in this guide was synthetically generated, and it was formatted to
 match the Texas Education Agency's state test file formats (Texas's file formats
@@ -129,7 +146,7 @@ exams:
 This standard deviation table is used in the code, specifically imported into
 the `sd_table` variable.
 
-#### Loading the OpenSDP Data set and R Packages
+### Loading the OpenSDP Data set and R Packages
 
 This guide takes advantage of the OpenSDP synthetic data set and several key R
 packages. The first chunk of code below loads the R packages (make sure to
@@ -196,21 +213,6 @@ prof_lev$score <- c(1360, 1467, 1500, 1536, 1575, 1595,
 ```
 
 
-### About the Analyses
-
-In various contexts, students of different identity markers (race, class,
-gender, English Language Learner status, etc.) may have systematically differing
-educational outcomes. These gaps often present themselves in standardized
-testing data, at the national, state, and local levels. The following analyses
-will assist your organization in seeing where gaps exist and how wide they are,
-in order to inform the conversation about why the gaps exist and what to do
-about them.
-
-### Giving Feedback on this Guide
- 
-This guide is an open-source document hosted on GitHub and generated using R
-Markdown. We welcome feedback, corrections, additions, and updates. Please visit
-the OpenSDP equity metrics repository to read our contributor guidelines.
 
 ## Analyses
 
@@ -223,7 +225,7 @@ magnitude of the largest gap(s) in the district while controlling for other
 factors. 
 
 
-### Exploratory Analysis
+## Exploratory Analysis
 
 **Purpose:** Descriptive statistics give your agency a quick snapshot of current
 achievement gaps among students, identifying areas for further investigation and
@@ -319,7 +321,7 @@ correctly?
 - How do different study sub-populations in your organization perform on standardized tests?
 - Which differences do you want to explore further?
 
-### Gap Analysis
+## Gap Analysis
 
 **Purpose:** Descriptive statistics give your agency a quick snapshot of current
 achievement gaps among students, identifying areas for further investigation and
@@ -426,7 +428,11 @@ focus on just that one gap here. However, the next chunk of code will determine
 which gap(s) will be explored in the rest of our analyses. The user can explore
 multiple gaps at once by setting the following variables to include multiple gaps
 from `gap.table`. This is shown in commented out code in the middle of the
-chunk.
+chunk. Modifying this block of code is an example of "switching" which allows us to 
+modify the report by modifying a few key variables. In this case, here we can choose 
+which gaps we want to look at more closely by indexing the results of the `gap.test()` 
+function and filtering down to the number of gaps we want to investigate. Some 
+different options are given in the commented out code below. 
 
 
 ```r
@@ -450,8 +456,10 @@ rownames(gaps) <- NULL
 n.gaps <- 1
 ```
 
+#### Describe the Outcome
+
 **Analytic Technique:** Calculate the summary statistics for exam performance,
-for all students at the grade level(s) in which gaps are measured. This will
+for all students in the selected gap comparison. This will
 give us a few points of reference. Here, we look at the distribution of scores
 on the 3rd grade math test.
 
@@ -462,8 +470,8 @@ on the 3rd grade math test.
 for(i in 1:n.gaps){
   
   #Save grade and subject tested information
-  grade <- gaps[i,"grade_level"]
-  subject <- gaps[i,"outcome"]
+  grade <- gaps[i, "grade_level"]
+  subject <- gaps[i, "outcome"]
   
   data = test_data[test_data$grade_level == grade,] #Isolates grade level
   print(paste("Grade level:",grade,", Outcome:",labels[subject]))
@@ -480,55 +488,56 @@ for(i in 1:n.gaps){
 ```
 
 One particularly useful output in this summary is that we see the minimum and
-maximum scores in our data set, which gives us a rough sense of the bounds for
+maximum scores in our data set for this group, which gives us the bounds for
 scores on this type of exam. It is tough to get a sense of the shape of the
 distribution from summary statistics alone, so we will turn to visualization.
 
+#### Visualize the Outcome
+
 **Analytic Technique:** Create visualizations of the data, to provide a more
 developed sense of the distributions behind these summary statistics.
-Specifically, here we use box plots and histograms
+Specifically, here we use box plots and histograms:
 
 
 ```r
 # // Visualizations: Box plots and Histograms
 #Loop over gap number in our table of gaps
-for(i in 1:n.gaps){
-  
-  #Save grade and subject tested information
+for (i in 1:n.gaps) {
+  # Filter grade and subject tested information
   grade <- gaps[i,"grade_level"]
   subject <- gaps[i,"outcome"]
+  data = test_data[test_data$grade_level == grade,] 
   
-  data = test_data[test_data$grade_level == grade,] #Isolates 5th and 8th graders
+  # Set variables and parameters for our boxplot
+  p <- ggplot(data, aes(x=as.factor(grade_level), y=data[,subject])) + 
+        geom_boxplot() +
+        ggtitle(paste("Grade:",grade,",",labels[subject], "(all students)")) +
+        scale_y_continuous(name=labels[subject]) +
+        scale_x_discrete(name="Grade Level")
   
-    #Set variables and parameters for our boxplot
-    p <- ggplot(data, aes(x=as.factor(grade_level), y=data[,subject])) + 
-          geom_boxplot() +
-          ggtitle(paste("Grade:",grade,",",labels[subject], "(all students)")) +
-          scale_y_continuous(name=labels[subject]) +
-          scale_x_discrete(name="Grade Level")
+  # This function adds reference lines for proficiency levels to a plot of test 
+  # scores, it uses the defined proficiency level object prof_lev, that we input 
+  # above to augment the plot with proficiency levels
+  p <- add_ref_levels(plot = p, prof_levels = prof_lev, direction = "horizontal", 
+                       grade = grade, subject = subject) + theme_bw()
     
-    p <- add_ref_levels(plot = p, prof_levels = prof_lev, direction = "horizontal", 
-                         grade = grade, subject = subject) + theme_bw()
-        print(p) #Print boxpolot
+  # Print boxpolot
+  print(p) 
     
-    #Set variables and parameters for our histogram
-    p <- ggplot(data, aes(x=data[,subject])) + 
-          ggtitle(paste("Grade:",grade,",",labels[subject], "(all students)"))+
-          geom_histogram(alpha = 0.5, binwidth = 50, fill = "dodgerblue", 
-                         color = "dodgerblue") + 
-          scale_x_continuous(name=paste(labels[subject])) 
-    # This function adds reference lines for proficiency levels to a plot of test 
-    # scores, it uses the defined proficiency level object prof_lev, that we input 
-    # above to augment the plot with proficiency levels
-    p <- add_ref_levels(plot = p, prof_levels = prof_lev, direction = "vertical", 
-                         grade = grade, subject = subject) + 
-      theme_bw()
-    
-    
-    print(p) #Print histogram
-    
-
-}#End loop over gap number
+  # Set variables and parameters for our histogram
+  p <- ggplot(data, aes(x=data[,subject])) + 
+        ggtitle(paste("Grade:",grade,",",labels[subject], "(all students)")) +
+        geom_histogram(alpha = 0.5, binwidth = 50, fill = "dodgerblue", 
+                       color = "dodgerblue") + 
+    coord_cartesian(expand = FALSE) +
+        scale_x_continuous(name=paste(labels[subject])) 
+  
+  # Add reference lines
+  p <- add_ref_levels(plot = p, prof_levels = prof_lev, direction = "vertical", 
+                       grade = grade, subject = subject) + theme_bw()
+  
+  print(p) #Print histogram
+}
 ```
 
 <img src="../figure/equity_VisualizeTotals-1.png" style="display: block; margin: auto;" /><img src="../figure/equity_VisualizeTotals-2.png" style="display: block; margin: auto;" />
@@ -542,6 +551,8 @@ very close to the the "meets standard" benchmark, while the third quartile of
 scores is very close the mastery benchmark level. This means that about half of 
 all students meet the standard and a quarter of all students show mastery level 
 understanding on the exam.
+
+#### Look at Score Distributions Numerically
 
 **Analytic Technique:** Compare descriptive statistics among the different
 student demographic populations described in our gap. Now that we have some
@@ -588,6 +599,8 @@ for males, compared to females. This suggests that the distributions share a
 shape, but are centered at different scale scores. We will explore this
 hypothesis directly by looking at shapes through visualization.
 
+#### Compare the Groups Visually
+
 **Analytic Technique:** Visualize the comparisons, to give us a sense of scale
 and shape in these gaps. To do so, we will use both box plots broken down by
 gender and a stacked histogram broken down by gender.
@@ -596,6 +609,8 @@ gender and a stacked histogram broken down by gender.
 ```r
 # // Step 1: Initialize a set of distinguishable colors for graphics
 colors <- c("red","dodgerblue3","green","coral","violet","burlywood2","grey68")
+
+# TODO - Fix binwidth, it is wrong here
 
 #Loop over gap number in our table of gaps
 for(i in 1:n.gaps){
@@ -662,6 +677,7 @@ By contrast, the median and third quartile for male scores outperform the
 students met the standard on the exam and more than a quarter demonstrated 
 mastery.
 
+#### Compare Gaps by Other Student Characteristics
 
 **Analytic Technique:** Explore gap within levels of another data feature.
 Often, it can be helpful to look at the intersections of the demographic data we
@@ -874,7 +890,7 @@ socioeconomic subgroups.
 
 **Follow up question: How does this analysis look disaggregated by race/ethnicity?**
 
-### Comparing gaps at schools
+## Comparing Gaps by Schools
 
 **Purpose:** When you already have a sense of which gaps are greatest in
 magnitude throughout the data set, it can be useful to pinpoint at which schools
@@ -1045,7 +1061,7 @@ share about their practices and procedures to contrast high and low gap school
 practices. This visualization could provide impetus for the start a
 collaborative conversation between campuses.
 
-### Identifying Target Schools
+#### Identifying Target Schools
 
 **Purpose:** Policymakers may propose interventions to work towards closing
 these gaps. Such interventions generally target the low-scoring student
@@ -1286,7 +1302,7 @@ to weigh the goal of minimizing the achievement gap in the district overall
 against the potential downside of biasing the placement of interventions towards
 larger schools.
 
-### Isolating effects of covariates
+## Measuring Gaps with Covariate Controls
 
 **Purpose:** Students possess many individual and demographic features that
 simultaneously affect their education. It can be hard to determine, from an

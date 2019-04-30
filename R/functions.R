@@ -302,23 +302,26 @@ add_ref_levels <- function(plot, prof_levels, direction = c("horizontal", "verti
     text_size <- 4
   }
   
+  nudge_y <- diff(y_range) / 10
+  nudge_x <- diff(x_range) / 20
+  
   # Decide on whether we are drawing horizontal or vertical reference lines
   if(direction == "horizontal"){
     plot <- plot + geom_hline(data = plot_levels, aes(yintercept = score), 
                               linetype = 2) + 
-      geom_text(data = plot_levels, aes(y = score + 40, # put the label up high
+      geom_text(data = plot_levels, aes(y = score, # put the label up high
                                         # bump the label to the right of the line
-                                        x = x_range[2] + diff(x_range)/10, 
+                                        x = x_range[2], 
                                         label = prof_level), 
-                size = text_size)  + # set the text size
+                size = text_size, nudge_y = nudge_y/2, nudge_x = nudge_x)  + # set the text size
       expand_limits(x = x_range[2] + diff(x_range)/5) # make the plot big enough
     
   } else if(direction == "vertical") { 
     plot <- plot + geom_vline(data = plot_levels, aes(xintercept = score), 
                               linetype = 2) + 
-      geom_text(data = plot_levels, aes(x = score + 80, y = y_range[2] + diff(y_range)/10, 
+      geom_text(data = plot_levels, aes(x = score, y = y_range[2], 
                                         label = prof_level, fill = NULL), 
-                size = text_size)  + 
+                size = text_size, nudge_x = nudge_x, nudge_y = nudge_y/2)  + 
       expand_limits(y = y_range[2] + diff(y_range)/5)
   }
   
@@ -362,8 +365,6 @@ adjust_hedges_g <- function(diff, x, y) {
   return(g_star)
 }
 
-
-# TODO - Function to add effect size "magnitudes" as an annotation to a plot
 
 #' Plot the results of a gap test table
 #'
