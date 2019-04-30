@@ -117,6 +117,14 @@ test_that("Test cutoff and n count parameters work", {
   
 })
 
+context("Test varying input data types for proper warnings, error messages, etc.")
+
+test_that("Outcome variables work", {
+  
+  
+  
+})
+
 
 
 # 

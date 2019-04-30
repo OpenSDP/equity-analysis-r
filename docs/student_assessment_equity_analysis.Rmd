@@ -19,9 +19,9 @@ output:
 
 # Creating Equity Metrics
 
-In this guide, you will use data visualization and descriptive statistics to
+**In this guide, you will use data visualization and descriptive statistics to
 investigate equity in student testing outcomes along lines of race, income,
-gender, learning differences, English proficiency, and migrant status.
+gender, learning differences, English proficiency, and migrant status.**
 
 ## Objective
 
@@ -29,9 +29,19 @@ In this guide, you will use data visualization and descriptive statistics to
 investigate equity in student testing outcomes along lines of race, income,
 gender, learning differences, English proficiency, and migrant status.
 
+#### About the Analyses
+
+In various contexts, students of different demographic attributes captured by education data systems
+for reporting purposes (race, class, gender, English Language Learner status, etc.) may have
+systematically differing educational outcomes. These gaps often present themselves in standardized
+testing data, at the national, state, and local levels. The following analyses will assist your
+organization in describing where gaps exist and their magnitude, in order to inform the conversation
+about why the gaps exist and what to do
+about them.
+
 ### Using this Guide
 
-This guide utilizes mock data from Texas's standardized exams (STAAR test,
+This guide utilizes synthetic data from Texas's standardized exams (STAAR test,
 grades 3-8). Therefore, Texas districts can use this code to directly analyze
 the testing data files they have received from the Texas Education Agency.
 However, the code can be adapted to any other state or district context in which
@@ -43,14 +53,14 @@ changes to the charts using the code and sample data, or modify the code to work
 with your own data. If you are familiar with GitHub, you can click "Go to
 Repository" and clone the entire repository to your own computer.
 
-Go to the Participate page to read about more ways to engage with the OpenSDP
-community or reach out for assistance in adapting this code for your specific
-context.
+Go to the [Participate page](https://opensdp.github.io/participate/) to read about more ways to
+engage with the OpenSDP community or reach out for assistance in adapting this code for your
+specific context.
 
 ## Getting Started
 
-To complete this tutorial, the user will need R, RStudio, and the following R 
-packages installed on his/her machine: 
+To complete this tutorial, you will need R, RStudio, and the following R 
+packages installed on your machine: 
 
 - `tidyverse`: For convenient data and output manipulation
 - `ggplot2`: For graphics
@@ -62,10 +72,9 @@ console:
 
 `install.packages('ggplot2')`
 
-In addition, this guide will draw from OpenSDP-written functions defined in 
-the `functions.R` document, which is located in the `R` folder of this guide's
-GitHub repository. Please make sure to have downloaded the entire GitHub 
-repository to run this code.
+In addition, this guide will draw from OpenSDP-written functions defined in the `functions.R`
+document, which is located in the `R` folder of this guide's GitHub repository. Please make sure to
+have downloaded the entire GitHub repository to run this code.
 
 
 ```{r knitrSetup, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE, comment=NA}
@@ -87,15 +96,6 @@ options(width = 100)
 </div>
 </div>
 
-#### About the Analyses
-
-In various contexts, students of different identity markers (race, class,
-gender, English Language Learner status, etc.) may have systematically differing
-educational outcomes. These gaps often present themselves in standardized
-testing data, at the national, state, and local levels. The following analyses
-will assist your organization in seeing where gaps exist and how wide they are,
-in order to inform the conversation about why the gaps exist and what to do
-about them.
 
 #### Giving Feedback on this Guide
  
@@ -103,15 +103,15 @@ This guide is an open-source document hosted on GitHub and generated using R
 Markdown. We welcome feedback, corrections, additions, and updates. Please visit
 the OpenSDP equity metrics repository to read our contributor guidelines.
 
-
 ## About the Data
 
 The data used in this guide was synthetically generated, and it was formatted to
-match the Texas Education Agency's state test file formats (Texas's file formats
-can be found here: 
-[https://tea.texas.gov/student.assessment/datafileformats](https://tea.texas.gov/student.assessment/datafileformats)).
+match the Texas Education Agency's state test file formats 
+(
+[Texas's file formats can be found here.](https://tea.texas.gov/student.assessment/datafileformats)
+).
 The data has one record per student. Out of the hundreds of features reported
-for each student by the Texas Education Agency, we used (and retained) the
+for each student by the Texas Education Agency, we selected the
 following features in our analysis: student grade level (3-8), school code,
 student ID, gender, race-ethnicity, economic disadvantage level, Limited English
 Proficiency level, and scale scores in reading, math, and writing (for the STAAR
@@ -143,18 +143,6 @@ need for our analyses. If you would like to directly use your own data with the
 code from this guide, it is best to delete unnecessary features and change the
 headers to the feature names we chose (above). A more detailed data definition
 guide can be found in the `man` folder in the GitHub repository.
-
-Although not required, it is useful to compile a small table of the standard
-deviations of the scores on the exams statewide, broken down by grade and
-subject area. This will allow us to compute more standardized measures of gaps
-in the following code. Here is an example of the expected table format, using
-standard deviations by grade and tested area from the 2014 Texas state STAAR
-exams:
-
-<img src="../img/sd_table.png" style="display: block; margin: 0 auto; height: 170px;">
-
-This standard deviation table is used in the code, specifically imported into
-the `sd_table` variable.
 
 ### Loading the OpenSDP Data set and R Packages
 
@@ -220,7 +208,20 @@ prof_lev$score <- c(1360, 1467, 1500, 1536, 1575, 1595,
                   1555, 1633, 1667, 1718, 1753, 1783)
 ```
 
+Although not required, it is useful to compile a small table of the standard
+deviations of the scores on the exams statewide, broken down by grade and
+subject area. This will allow us to compute more standardized measures of gaps
+in the following code. Here is an example of the expected table format, using
+standard deviations by grade and tested area from the 2014 Texas state STAAR
+exams:
 
+
+```{r printSDtable}
+kable(sd_table)
+```
+
+This standard deviation table is used in the code, specifically imported into
+the `sd_table` variable.
 
 ## Analyses
 
@@ -257,52 +258,63 @@ analysis.
 
 Further details on the data elements used in this guide and their definitions in the `man` subfolder 
 which contains further details and documentation on the file specifications for TEA assessment data.
-
+**Your data should use the same variable names and types, but the specific codes you use for each 
+data element can vary - for example you can use different racial categories or different catefories 
+for student sex.**
 
 **Analytic Technique:** Review your data using exploratory graphs to verify the data is imported 
 correctly:
-
 
 Let's make a few quick graphs to visually inspect our data. Here we use density plots to compare 
 the overall distribution of test scores between student groups. It's always good to start with 
 some graphical exploration of the data to verify the data is correct and to orient ourselves to 
 the scale of the data. 
 
-```{r densityexploration}
-ggplot(test_data) + aes(x = rdg_ss, group = male) + 
+```{r densityexploration, out.width = "50%", fig.show = "hold", out.extra='style="margin: auto"'}
+ggplot(test_data) + aes(x = rdg_ss, color = male) + 
   geom_density() + 
   facet_wrap(~grade_level) + 
   labs(x = "Reading Score", title = "Reading Scores by Grade and Sex") + 
-  theme_bw()
+  theme_bw() + theme(legend.position = "bottom")
 
-ggplot(test_data) + aes(x = rdg_ss, group = race_ethnicity) + 
+ggplot(test_data) + aes(x = rdg_ss, color = race_ethnicity) + 
   geom_density() + 
   facet_wrap(~grade_level) + 
   labs(x = "Reading Score", title = "Reading Scores by Grade and Race") + 
-  theme_bw()
+  theme_bw() + theme(legend.position = "bottom")
 
-ggplot(test_data) + aes(x = math_ss, group = race_ethnicity) + 
+ggplot(test_data) + aes(x = math_ss, color = male) + 
+  geom_density() + 
+  facet_wrap(~grade_level) + 
+  labs(x = "Math Score", title = "Math Scores by Grade and Sex") + 
+  theme_bw() + theme(legend.position = "bottom")
+
+
+ggplot(test_data) + aes(x = math_ss, color = race_ethnicity) + 
   geom_density() + 
   facet_wrap(~grade_level) + 
   labs(x = "Math Score", title = "Math Scores by Grade and Race") + 
-  theme_bw()
+  theme_bw() + theme(legend.position = "bottom")
 
-ggplot(test_data) + aes(x = math_ss, group = male) + 
-  geom_density() + 
-  facet_wrap(~grade_level) + 
-  labs(x = "Math Score", title = "Math Scores by Grade and Race") + 
-  theme_bw()
 
 ```
 
 For a more direct comparison of means we can use boxplots:
 
-```{r boxplot}
+```{r boxplot, out.width = "50%", fig.show = "hold", out.extra='style="margin: auto"'}
 ggplot(test_data) + aes(y = rdg_ss, x = race_ethnicity) + 
   geom_boxplot() + 
   facet_wrap(~grade_level) + 
   labs(x = "Reading Score", title = "Reading Scores by Grade and Race") + 
   theme_bw()
+
+ggplot(test_data) + aes(y = math_ss, x = male) + 
+  geom_boxplot() + 
+  facet_wrap(~grade_level) + 
+  labs(x = "Reading Score", title = "Math Scores by Grade and Sex") + 
+  theme_bw()
+
+
 ```
 
 **Ask Yourself**
@@ -313,6 +325,12 @@ correctly?
 - Which differences do you want to explore further?
 
 ## Gap Analysis
+
+You could continue exploring all the combinations in your data to identify gaps visually. 
+Here, we present an alternative, calculating the achievement gap for all combinations of 
+student subgroups of interest and measuring and ranking the magnitudes of these gaps. 
+This allows us to zero in our focus on the substantively large gaps more quickly and 
+do a more thorough analysis of those gaps specifically. 
 
 **Purpose:** Descriptive statistics give your agency a quick snapshot of current
 achievement gaps among students, identifying areas for further investigation and
@@ -327,68 +345,67 @@ function there. For now, here is the usage information:
 
 **Required Statistical Functions:**
 
-`gap.test`: Visualizes and quantifies gaps in student performance across
-demographic markers.
+`gap.test`: Quantifies gaps in student performance across demographic markers.
 
 Output: A `data.frame` table of the top `n` gaps, as measured by effect size, as
-well as the demographic and test information for each gap. Function also prints
-comparative visuals of top gaps.
+well as the demographic and test information for each gap. 
 
 Inputs:
 
-`gap.test(df, grade, outcome, features, n = 3, sds = NULL, comp = FALSE, cut = NULL, med = FALSE, outlbl = NULL)`
+`gap.test(df, grade, outcome, features, n = 3, sds = NULL, cut = NULL, med = FALSE, verbose = FALSE, effect_size = "cohens_d")`
 
-
-- df = data set, should be wide format, one row per student, and have column for grade level (class: data frame)
-- grade = name of tested grade column in data set (class: character)
-- outcome = name of outcome variable (usually test scores) in data set (class: character)
-- features = vector of features in data set where testing for gaps (class: character)
-- n (optional) = Number of largest gaps the function outputs (class: integer, default: 3)
-- sds (optional) = dataframe containing the state-wide standard deviations for all outcomes/exams (class: data frame, default: NULL)
-- comp (optional) = Indicator to output additional comparative gap graphics (class: boolean, default: FALSE)
-- cut (optional) = Minimum number of students for level in a gap (class: integer, default: NULL)
-- med (optional) = Indicator if would like function to also output standardized difference of medians, in addition to effect size (class: boolean, default: FALSE)
-- outlbl (optional) = label for measured outcome, to print on graphs (class: character, default: NULL)
+- `df` = data set, should be one row per student, and have column for grade level and the outcome (class: data frame)
+- `grade` = name of tested grade column in data set (class: character)
+- `outcome` = name of outcome variable (usually test scores) in data set (class: character)
+- `features` = vector of features in data set where testing for gaps (class: character)
+- `n` (optional) = Number of largest gaps the function outputs (class: integer, default: 3)
+- `sds` (optional) = dataframe containing the state-wide standard deviations for all outcomes/exams (class: data frame, default: NULL)
+- `cut` (optional) = Minimum number of students for level in a gap (class: integer, default: NULL)
+- `med` (optional) = Indicator if would like function to also output standardized difference of medians, in addition to effect size (class: boolean, default: FALSE)
+- `verbose` = FALSE, if TRUE, gives additional output
+- `effect_size` = character, default is "cohens_d", but user can also select "hedges_g" for the 
+effect size calculation
 
 More detailed usage information can be found in the `R` folder in the GitHub
-repository. We use the function here to find the top 3 gaps in math scores, in
+repository. We use the function here to find the top 3 (`n=3`) gaps in math scores, in
 terms of effect size, between students of different economic disadvantage
-levels, races, genders, Special Education statuses, and LEP statuses. We check
-among all grades in the dataset: 3-8. The number of top gaps shown can be
-changed based on user inputs, as well as the gap categories and subject areas
-measured.
+levels, race, sex, IEP and LEP statuses. We check among all grades in the dataset: 3-8. 
+The number of top gaps shown can be changed based on user inputs, as well as the gap categories 
+and subject areas measured. 
+
+Note that we also require subgroups with greater than 500 students to be included in the results 
+(`cut=500`). 
 
 ```{r GapTest, echo=TRUE}
-#Use 'gap.test' function to explore most major gaps in student population
+# Use 'gap.test' function to explore most major gaps in student population
 gap.table <- gap.test(df = test_data,
                     grade = "grade_level",
                     outcome = "math_ss",
                     features = c('eco_dis','lep','iep','race_ethnicity','male'),
-                    sds = sd_table,
-                    n = 3,
-                    cut = 120)
+                    sds = sd_table, n = 3, cut = 500)
 ```
 
 The `gap.test` output shows us that the top 3 gaps, in terms of effect size, are
-for 3rd, 4th, and 5th grade math scores between gender groups. The effect sizes
-are negative, and the labeling on the graph shows us the effect size was
-calculated with the average score for male "M" students subtracted from the
+for 3rd, 4th, and 5th grade math scores between male and female students. The effect sizes
+are negative - the average score for male "M" students subtracted from the
 average score for female "F" students. Thus, on average, the male students
 scored higher than female students. In our data set, these gaps were wider than
 any other gap based in racial differences, socioeconomic differences,
 differences in English proficiency status, or differences in special education
-status.
+status (for subgroups with more than 500 students - reduce the cutoff and see what happens).
+
+The function outputs a table with each effect size, mean difference (to
+show the gap on the scale of the response), and demographic information of the gap
+(groups affected, grade level, test subject). We have stored this as
+`gap.table`. If wanted, the user could set the inputs (`verbose = TRUE`) of the function such that 
+it outputs additional effect size calculations.
+
+We can then apply the `autoplot.gap_test()` function to depict these differences visually. 
 
 ```{r}
+# TODO - change this to gap_test_plot()
 autoplot.gap_test(gap.table)
 ```
-
-
-The function also outputs a table with each effect size, mean difference (to
-show the gap on the scale of the test), and demographic information of the gap
-(groups affected, grade level, test subject). We have stored this as
-`gap.table`. If wanted, the user could set the inputs (see usage information
-above) of the function such that it outputs additional effect size calculations.
 
 Measuring the gaps in terms of effect size allows us to compare gaps across
 grade levels and subject areas, as effect size standardizes the gap by taking
@@ -401,7 +418,7 @@ our data surpass this threshold and are similar across grade levels. For
 simplicity, this report will focus on one grade level, but the following
 analyses can be done across grade levels.
 
-One technical note: Sometimes the distributions of test scores can be skewed,
+One technical note: Sometimes the distributions of test scores (or other outcomes) can be skewed,
 making the median a more advantageous measure of central tendency (since it is
 less sensitive to outliers and skew). In these cases, set the `gap.test`
 function's `med` parameter to `TRUE` to output a table that identifies the top 3 gaps
@@ -409,9 +426,9 @@ as measured by the standardized median difference.
 
 ### Investigate Individual Gaps
 
-Since our largest effect size gap was the grade 3 gender gap on the standardized
-math test, we will explore that gap further. For demonstration purposes, we will
-focus on just that one gap here. However, the next chunk of code will determine
+Now that we've identified the largest effect size gaps in our dataset, we can turn our attention 
+to exploring the largest gaps in more depth. For demonstration purposes, we will
+focus on just that one gap here - the largest. However, the next chunk of code will determine
 which gap(s) will be explored in the rest of our analyses. The user can explore
 multiple gaps at once by setting the following variables to include multiple gaps
 from `gap.table`. This is shown in commented out code in the middle of the
@@ -451,49 +468,65 @@ give us a few points of reference. Here, we look at the distribution of scores
 on the 3rd grade math test.
 
 ```{r Averages, echo=TRUE}
-#Prints summary statistics for each gap's grade level
-#Loop over gap number in our table of gaps
-for(i in 1:n.gaps){
-  
-  #Save grade and subject tested information
+# Prints summary statistics for each gap's grade level
+# Loop over gap number in our table of gaps
+for (i in 1:n.gaps) {
+  # Save grade and subject tested information
   grade <- gaps[i, "grade_level"]
   subject <- gaps[i, "outcome"]
-  
   data = test_data[test_data$grade_level == grade,] #Isolates grade level
   print(paste("Grade level:",grade,", Outcome:",labels[subject]))
   a <- summary(data[,subject]) #Summary stats table for grade and test
   print(a) #Print summary table
   
-}#End loop over gap number
-
+}
 ```
 
-One particularly useful output in this summary is that we see the minimum and
+One useful output in this summary is to note the minimum and
 maximum scores in our data set for this group, which gives us the bounds for
 scores on this type of exam. It is tough to get a sense of the shape of the
 distribution from summary statistics alone, so we will turn to visualization.
 
 #### Visualize the Outcome
 
+To explore this particular gap let's visualize the outcome variable. 
+This will give us a descriptive look at the magnitude and scope of the measure. If you know the 
+measure well you can skip to the next step.
+
+In this step we introduce a new function - `add_ref_levels()` which annotates our plot using the 
+optional `prof_lev` data which encodes the proficiency levels for our assessment score and labels 
+them on the histogram below. To use the `add_ref_levels()` function use the following arguments:
+
+`add_ref_levels(plot, prof_levels, direction = "vertical", grade, subject)`
+
+- `plot` = a `ggplot` object you wish to add reference lines to (required, class = ggplot)
+- `prof_levels` = a dataset containing the values of the proficiency cutpoints for an assessment (required, class = data.frame)
+- `direction` = should the reference lines be drawn horizontally or vertically (class: character, default = "vertical")
+- `grade` = the value of grade in the `prof_level` dataset to select for drawing reference lines (class: character)
+- `subject` = the value of the subject in the `prof_level` dataset to select for drawing reference lines (class: character)
+
+Using the dataset of proficiency levels we imported above, we can overlay proficiency levels onto 
+our plots for additional context. 
+
 **Analytic Technique:** Create visualizations of the data, to provide a more
 developed sense of the distributions behind these summary statistics.
 Specifically, here we use box plots and histograms:
 
-```{r VisualizeTotals, echo=TRUE}
+```{r VisualizeTotals, echo=TRUE, out.width = "50%", fig.show = "hold", out.extra='style="margin: auto"'}
 # // Visualizations: Box plots and Histograms
 #Loop over gap number in our table of gaps
 for (i in 1:n.gaps) {
   # Filter grade and subject tested information
-  grade <- gaps[i,"grade_level"]
-  subject <- gaps[i,"outcome"]
+  grade <- gaps[i, "grade_level"]
+  subject <- gaps[i, "outcome"]
   data = test_data[test_data$grade_level == grade,] 
   
   # Set variables and parameters for our boxplot
-  p <- ggplot(data, aes(x=as.factor(grade_level), y=data[,subject])) + 
+  p <- ggplot(data, aes(x = as.factor(grade_level), y = data[,subject])) + 
         geom_boxplot() +
         ggtitle(paste("Grade:",grade,",",labels[subject], "(all students)")) +
-        scale_y_continuous(name=labels[subject]) +
-        scale_x_discrete(name="Grade Level")
+        scale_y_continuous(name = labels[subject]) +
+        scale_x_discrete(name = "Grade Level")
   
   # This function adds reference lines for proficiency levels to a plot of test 
   # scores, it uses the defined proficiency level object prof_lev, that we input 
@@ -505,13 +538,12 @@ for (i in 1:n.gaps) {
   print(p) 
     
   # Set variables and parameters for our histogram
-  p <- ggplot(data, aes(x=data[,subject])) + 
+  p <- ggplot(data, aes(x = data[,subject])) + 
         ggtitle(paste("Grade:",grade,",",labels[subject], "(all students)")) +
         geom_histogram(alpha = 0.5, binwidth = 50, fill = "dodgerblue", 
                        color = "dodgerblue") + 
     coord_cartesian(expand = FALSE) +
-        scale_x_continuous(name=paste(labels[subject])) 
-  
+        scale_x_continuous(name = paste(labels[subject])) 
   # Add reference lines
   p <- add_ref_levels(plot = p, prof_levels = prof_lev, direction = "vertical", 
                        grade = grade, subject = subject) + theme_bw()
@@ -533,6 +565,9 @@ understanding on the exam.
 
 #### Look at Score Distributions Numerically
 
+Now let's repeat these descriptive steps disaggregating by the student subgroups that 
+represent our largest gap. First we look numerically:
+
 **Analytic Technique:** Compare descriptive statistics among the different
 student demographic populations described in our gap. Now that we have some
 measures for the performance on exams among all of our students, we can create
@@ -541,10 +576,9 @@ those same measures for male and female students. Then, we can compare them.
 ```{r DescriptiveDemographics, echo=TRUE}
 # // Comparisons: Generating summary stats for demographics in gaps
 #Loop over gap number in our table of gaps
-for(i in 1:n.gaps){
-  
-  #Save grade, subject tested, and demographic information
-  grade <- gaps[i,"grade_level"]
+for (i in 1:n.gaps) {
+  # Save grade, subject tested, and demographic information
+  grade <- gaps[i, "grade_level"]
   subject <- gaps[i,"outcome"]
   dem <- gaps[i,"feature"]
   lvl1 <- gaps[i,"level_1"]
@@ -561,7 +595,7 @@ for(i in 1:n.gaps){
       colnames(a)[1] <- labels[dem] #Labels comparison table
       print(a) #Prints comparison table
   
-} #End loop over gap number
+}
 
 ```
 
@@ -573,18 +607,20 @@ hypothesis directly by looking at shapes through visualization.
 
 #### Compare the Groups Visually
 
+Now let's compare the two groups visually.
+
 **Analytic Technique:** Visualize the comparisons, to give us a sense of scale
 and shape in these gaps. To do so, we will use both box plots broken down by
 gender and a stacked histogram broken down by gender.
 
-```{r VisualizeGenderGap, echo=TRUE}
+```{r VisualizeGenderGap, echo=TRUE, out.width = "50%", fig.show = "hold", out.extra='style="margin: auto"'}
 # // Step 1: Initialize a set of distinguishable colors for graphics
 colors <- c("red","dodgerblue3","green","coral","violet","burlywood2","grey68")
 
 # TODO - Fix binwidth, it is wrong here
 
 #Loop over gap number in our table of gaps
-for(i in 1:n.gaps){
+for (i in 1:n.gaps) {
   
   #Save grade, subject tested, and demographic information
   grade <- gaps[i,"grade_level"]
@@ -597,11 +633,11 @@ for(i in 1:n.gaps){
   data = data[data[,dem] == lvl1 | data[,dem] == lvl2, ]#Isolates demographic groups
       
   #Set variables and parameters for our boxplot
-  bp <- ggplot(data, aes(x=as.factor(data[,dem]), y=data[,subject])) + 
+  bp <- ggplot(data, aes(x = as.factor(data[,dem]), y = data[,subject])) + 
         geom_boxplot() +
         ggtitle(paste("Grade:",grade,",", labels[subject],", by",labels[dem])) +
-        scale_y_continuous(name=labels[subject]) +
-        scale_x_discrete(name=labels[dem]) + 
+        scale_y_continuous(name = labels[subject]) +
+        scale_x_discrete(name = labels[dem]) + 
     theme_bw()
   # print(bp) #Print box plot
   
@@ -610,21 +646,19 @@ for(i in 1:n.gaps){
     print(bp)
   
   #Set variables and parameters for our histogram
-  h <- ggplot(data, aes(x=data[,subject], fill = as.factor(data[,dem]))) + 
-        ggtitle(paste("Grade:",grade,",", labels[subject],", by",labels[dem]))+
+  h <- ggplot(data, aes(x = data[,subject], fill = as.factor(data[, dem]))) + 
+        ggtitle(paste("Grade:",grade,",", labels[subject],", by",labels[dem])) +
         geom_histogram(alpha = 0.5, binwidth = 50) + 
-        scale_fill_manual(name=labels[dem],
-                          values=colors[1:length(levels(as.factor(data[,dem])))])+
-        scale_x_continuous(name=paste(labels[subject], ", Grade", grade)) 
+        scale_fill_manual(name = labels[dem],
+                          values = colors[1:length(levels(as.factor(data[,dem])))]) +
+        scale_x_continuous(name = paste(labels[subject], ", Grade", grade)) 
   # print(h) #Print histogram
   
   h <- add_ref_levels(plot = h, prof_levels = prof_lev, direction = "vertical", 
                          grade = grade, subject = subject) + theme_bw() +
     theme(legend.position = c(0.2, 0.8)) 
     print(h)
-  
-
-} #End loop over gap number
+}
 ```
 
 As we predicted, the distributions have similar shapes, with the male
@@ -682,7 +716,7 @@ We perform this through descriptive statistics and data visuals:
 group.by <- "eco_dis"
 
 #Loop over gap number in our table of gaps
-for(i in 1:n.gaps){
+for (i in 1:n.gaps) {
   
   #Save grade, subject tested, and demographic information
   grade <- gaps[i,"grade_level"]
@@ -698,13 +732,13 @@ for(i in 1:n.gaps){
   print(paste("Grade:",grade,",",labels[subject])) #Print subject and grade level
   
   #Loop over group.by levels
-  for(re in res){
+  for (re in res) {
   
     #Isolates observations from particular group in group.by
-    data.res <- data[data[,group.by]==re,]
+    data.res <- data[data[,group.by] == re, ]
     
     #Makes gap comparison table for particular group
-    a<-Summarize(data.res[,subject] ~ data.res[,dem]) #Makes comparison table
+    a <- Summarize(data.res[,subject] ~ data.res[,dem]) #Makes comparison table
     colnames(a)[1] <- labels[dem]
     print(paste(labels[group.by],": ",re))
     print(a) #Prints comparison table
@@ -735,7 +769,7 @@ comparisons through histogram and box plot visualizations.
 # // Histograms
 
 #Loop over gap number in our table of gaps
-for(i in 1:n.gaps){
+for (i in 1:n.gaps) {
   
   #Save grade, subject tested, and demographic information
   grade <- gaps[i,"grade_level"]
@@ -1019,7 +1053,7 @@ here because they are less susceptible to skew and outliers. We will visualize
 these medians with bar charts, and we will visualize the three lowest performing
 schools with comparative box plots.
 
-```{r MedianTargets, echo=TRUE}
+```{r MedianTargets, echo=TRUE, out.width = "50%", fig.show = "hold", out.extra='style="margin: auto"'}
 # // Measure and sort medians by school
 #Loop over gap number in our table of gaps
 for(i in 1:n.gaps){
@@ -1139,7 +1173,7 @@ the district-wide median.
 2) We will look at the number of target students at each campus who scored below
 the district-wide first quartile.
 
-```{r RawNumberTargets, echo=TRUE}
+```{r RawNumberTargets, echo=TRUE, out.width = "50%", fig.show = "hold", out.extra='style="margin: auto"'}
 ## // Find number of low-scoring students by school
 #Loop over gap number in our table of gaps
 for(i in 1:n.gaps){
