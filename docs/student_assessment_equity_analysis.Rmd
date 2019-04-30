@@ -648,7 +648,8 @@ for (i in 1:n.gaps) {
   #Set variables and parameters for our histogram
   h <- ggplot(data, aes(x = data[,subject], fill = as.factor(data[, dem]))) + 
         ggtitle(paste("Grade:",grade,",", labels[subject],", by",labels[dem])) +
-        geom_histogram(alpha = 0.5, binwidth = 50) + 
+        geom_histogram(alpha = 0.5, binwidth = 20) + 
+    coord_cartesian(expand = FALSE) + 
         scale_fill_manual(name = labels[dem],
                           values = colors[1:length(levels(as.factor(data[,dem])))]) +
         scale_x_continuous(name = paste(labels[subject], ", Grade", grade)) 
@@ -682,7 +683,6 @@ mastery.
 
 #### Compare Gaps by Other Student Characteristics
 
-**Analytic Technique:** Explore gap within levels of another data feature.
 Often, it can be helpful to look at the intersections of the demographic data we
 pulled. In particular, exploring possible gaps among combinations of race,
 socioeconomic status, gender, and student label status (LEP, Spec Ed, Migrant,
@@ -694,6 +694,8 @@ may be heightened among economically advantaged students but may not be present
 among economically disadvantaged students. Such a distinction could influence
 target populations for possible interventions.
 
+**Analytic Technique:** Explore gap within levels of another data feature by descriptively comparing 
+the means and gaps within different subgroups. 
 The user can change the comparison from socioeconomic status to another factor
 by manipulating the `group.by` variable.
 
@@ -706,6 +708,10 @@ its data by the following convention:
 | 2   | Eligible for reduced-price meals under the National School Lunch and Child Nutrition Program  |
 | 9   | Other economic disadvantage |
 | 0   | Not identified as economically disadvantaged |
+
+You can use this same approach with any subgroup in your data with any combination of levels. Some 
+subgroups may have small cell sizes so it is important to keep an eye on the `n` value in the 
+output below. 
 
 We perform this through descriptive statistics and data visuals:
 
@@ -783,22 +789,20 @@ for (i in 1:n.gaps) {
   res <- levels(as.factor(data[,group.by])) #Different levels of 'group.by' to explore
    
    # Facet by group by
-   h <- ggplot(data, aes(x=data[,subject], 
+   h <- ggplot(data, aes(x = data[,subject], 
                               fill = as.factor(data[,dem]))) + 
               ggtitle(paste("Grade:",grade,",", 
                             labels[subject],",",labels[group.by])) +
               geom_histogram(alpha = 0.5, binwidth = 50) + 
-              scale_fill_manual(name=labels[dem],
-              values=colors[1:length(levels(as.factor(data[,dem])))]) +
-              scale_x_continuous(name=paste(labels[subject]))  + 
+              scale_fill_manual(name = labels[dem],
+              values = colors[1:length(levels(as.factor(data[,dem])))]) +
+              scale_x_continuous(name = paste(labels[subject]))  + 
      facet_wrap(group.by)
    
     # Add reference levels
     h <- add_ref_levels(plot = h, prof_levels = prof_lev, direction = "vertical", 
                          grade = grade, subject = subject) + 
       theme_bw() + theme(legend.position = c(0.2, 0.8))
-    
-        
     print(h) #Print histogram
     
 }# End loop over gap number
@@ -818,7 +822,7 @@ that, we turn to box plots.
 # // Boxplots
 
 #Loop over gap number in our table of gaps
-for(i in 1:n.gaps){
+for (i in 1:n.gaps) {
   
   #Save grade, subject tested, and demographic information
   grade <- gaps[i,"grade_level"]
@@ -832,13 +836,13 @@ for(i in 1:n.gaps){
   res <- levels(as.factor(data[,group.by])) #Different levels of 'group.by' to explore
   
   # Facet by group by
-  bp <- ggplot(data, aes(x=as.factor(data[,dem]), 
-                               y=data[,subject])) + 
+  bp <- ggplot(data, aes(x = as.factor(data[,dem]), 
+                               y = data[,subject])) + 
               geom_boxplot() +
               ggtitle(paste("Grade:",grade,",", 
                             labels[subject],",",labels[group.by])) +
-              scale_y_continuous(name=labels[subject]) +
-              scale_x_discrete(name=labels[dem]) + facet_wrap(group.by)
+              scale_y_continuous(name = labels[subject]) +
+              scale_x_discrete(name = labels[dem]) + facet_wrap(group.by)
    
    #Add reference levels 
    bp <- add_ref_levels(plot = bp, prof_levels = prof_lev, direction = "horizontal", 
