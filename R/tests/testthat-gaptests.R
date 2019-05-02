@@ -10,7 +10,7 @@ test_df <- data.frame(math_ss = runif(3000),
                       )
 
 test_df2 <- data.frame(math_ss = runif(300), 
-                      grade = sample(c(3), 300, replace = TRUE), 
+                      grade = sample(2:8, 300, replace = TRUE), 
                       gender = sample(c("M", "F"), 300, replace = TRUE), 
                       stringsAsFactors = FALSE
 )
@@ -100,6 +100,20 @@ test_that("Row counts are right", {
 context("Test function parameters have desired effect")
 
 test_that("Test cutoff and n count parameters work", {
+  gt <- gap.test(df = test_df2,
+           grade = "grade",
+           outcome = "math_ss",
+           features = "gender",
+           cut = 5, verbose = TRUE,
+           n = 5)
+  expect_equal(nrow(gt), 5)
+  gt <- gap.test(df = test_df2,
+                 grade = "grade",
+                 outcome = "math_ss",
+                 features = "gender",
+                 cut = 5, verbose = TRUE,
+                 n = 2)
+  expect_equal(nrow(gt), 2)
   
   
   
