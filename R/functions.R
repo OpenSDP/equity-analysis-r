@@ -279,6 +279,7 @@ get_cluster_vcov <- function(model, cluster){
 add_ref_levels <- function(plot, prof_levels, direction = c("horizontal", "vertical"), 
                            grade, subject) {
   direction <- match.arg(direction)
+  # TODO - improve this so it can place the annotations on the facets correctly
   # Get only the subjects and grades we need, drop the rest
   plot_levels <- prof_levels[prof_levels$grade == grade, ]
   plot_levels <- plot_levels[plot_levels$subject == subject, ]
