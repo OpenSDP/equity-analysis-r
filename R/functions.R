@@ -196,11 +196,9 @@ gap_test <- function(df, grade, outcome, features, n = 5, sds = NULL,
                                        hedges_g = hedges_g, corr_coef = NA, 
                                        stringsAsFactors = FALSE)
         output.table <- rbind(output.table, output.table.tmp)
-      } #End loop over combinations
-      
-    } #End loop over features
-    
-  } #End loop over grade levels
+      }
+    } 
+  } 
   
   if (missing(n)) {
     n <- ifelse(nrow(output.table) < 10, 
