@@ -337,21 +337,21 @@ analysis.
 
 
 **Analytic Technique:** Identify major achievement gaps within the student
-population. To achieve this, we use the SDP function `gap.test`, which is
+population. To achieve this, we use the SDP function `gap_test`, which is
 defined in the repository's `R` folder. You can review the source code of this 
 function there. For now, here is the usage information:
 
 
 **Required Statistical Functions:**
 
-`gap.test`: Quantifies gaps in student performance across demographic markers.
+`gap_test`: Quantifies gaps in student performance across demographic markers.
 
 Output: A `data.frame` table of the top `n` gaps, as measured by effect size, as
 well as the demographic and test information for each gap. 
 
 Inputs:
 
-`gap.test(df, grade, outcome, features, n = 3, sds = NULL, cut = NULL, med = FALSE, verbose = FALSE, effect_size = "cohens_d")`
+`gap_test(df, grade, outcome, features, n = 3, sds = NULL, cut = NULL, med = FALSE, verbose = FALSE, effect_size = "cohens_d")`
 
 - `df` = data set, should be one row per student, and have column for grade level and the outcome (class: data frame)
 - `grade` = name of tested grade column in data set (class: character)
@@ -376,15 +376,15 @@ Note that we also require subgroups with greater than 500 students to be include
 (`cut=500`). 
 
 ```{r GapTest, echo=TRUE}
-# Use 'gap.test' function to explore most major gaps in student population
-gap.table <- gap.test(df = test_data,
+# Use 'gap_test' function to explore most major gaps in student population
+gap.table <- gap_test(df = test_data,
                     grade = "grade_level",
                     outcome = "math_ss",
                     features = c('eco_dis','lep','iep','race_ethnicity','male'),
                     sds = sd_table, n = 3, cut = 500)
 ```
 
-The `gap.test` output shows us that the top 3 gaps, in terms of effect size, are
+The `gap_test` output shows us that the top 3 gaps, in terms of effect size, are
 for 3rd, 4th, and 5th grade math scores between male and female students. The effect sizes
 are negative - the average score for male "M" students subtracted from the
 average score for female "F" students. Thus, on average, the male students
@@ -399,11 +399,10 @@ show the gap on the scale of the response), and demographic information of the g
 `gap.table`. If wanted, the user could set the inputs (`verbose = TRUE`) of the function such that 
 it outputs additional effect size calculations.
 
-We can then apply the `autoplot.gap_test()` function to depict these differences visually. 
+We can then apply the `gap_test_plot()` function to depict these differences visually. 
 
 ```{r}
-# TODO - change this to gap_test_plot()
-autoplot.gap_test(gap.table)
+gap_test_plot(gap.table)
 ```
 
 Measuring the gaps in terms of effect size allows us to compare gaps across
@@ -419,7 +418,7 @@ analyses can be done across grade levels.
 
 One technical note: Sometimes the distributions of test scores (or other outcomes) can be skewed,
 making the median a more advantageous measure of central tendency (since it is
-less sensitive to outliers and skew). In these cases, set the `gap.test`
+less sensitive to outliers and skew). In these cases, set the `gap_test`
 function's `med` parameter to `TRUE` to output a table that identifies the top 3 gaps
 as measured by the standardized median difference.
 
@@ -433,7 +432,7 @@ multiple gaps at once by setting the following variables to include multiple gap
 from `gap.table`. This is shown in commented out code in the middle of the
 chunk. Modifying this block of code is an example of "switching" which allows us to 
 modify the report by modifying a few key variables. In this case, here we can choose 
-which gaps we want to look at more closely by indexing the results of the `gap.test()` 
+which gaps we want to look at more closely by indexing the results of the `gap_test()` 
 function and filtering down to the number of gaps we want to investigate. Some 
 different options are given in the commented out code below. 
 
@@ -473,7 +472,7 @@ for (i in 1:n.gaps) {
   # Save grade and subject tested information
   grade <- gaps[i, "grade_level"]
   subject <- gaps[i, "outcome"]
-  tmp = test_data[test_data$grade_level == grade, ] # Isolates grade level
+  tmp <- test_data[test_data$grade_level == grade, ] # Isolates grade level
   print(paste("Grade level:", grade, ", Outcome:", labels[subject]))
   print(summary(tmp[,subject])) # print summary stats table for grade and test 
 }
@@ -516,10 +515,10 @@ for (i in 1:n.gaps) {
   # Filter grade and subject tested information
   grade <- gaps[i, "grade_level"]
   subject <- gaps[i, "outcome"]
-  data = test_data[test_data$grade_level == grade,] 
+  tmp <- test_data[test_data$grade_level == grade,] 
   
   # Set variables and parameters for our boxplot
-  p <- ggplot(data, aes(x = as.factor(grade_level), y = data[,subject])) + 
+  p <- ggplot(tmp, aes(x = as.factor(grade_level), y = tmp[,subject])) + 
         geom_boxplot() +
         ggtitle(paste("Grade:",grade,",",labels[subject], "(all students)")) +
         scale_y_continuous(name = labels[subject]) +
@@ -535,7 +534,7 @@ for (i in 1:n.gaps) {
   print(p) 
     
   # Set variables and parameters for our histogram
-  p <- ggplot(data, aes(x = data[,subject])) + 
+  p <- ggplot(tmp, aes(x = tmp[,subject])) + 
         ggtitle(paste("Grade:",grade,",",labels[subject], "(all students)")) +
         geom_histogram(alpha = 0.5, binwidth = 50, fill = "dodgerblue", 
                        color = "dodgerblue") + 
@@ -581,7 +580,6 @@ for (i in 1:n.gaps) {
   lvl1 <- gaps[i,"level_1"]
   lvl2 <- gaps[i,"level_2"]
  
-  # TODO - improve this
   tmp <- test_data %>% filter(grade_level == grade) %>%
       filter(get(dem) %in% c(lvl1, lvl2))
   # 
@@ -594,20 +592,15 @@ for (i in 1:n.gaps) {
   
   comptab <- tmp %>% group_by(get(dem)) %>% select(subject) %>%
     summarize_all(.funs = c("mean", "median", "sd", "min", "max"))
-    
-  # comptab <- Summarize(tmp[, subject] ~ tmp[, dem]) # Makes comparison table
-  #     colnames(comptab)[1] <- labels[dem] # Labels comparison table
-  #     print(comptab) # Prints comparison table
+  
+  names(comptab)[1] <- dem
   print(comptab)
   
 }
-
-
-
 ```
 
 We can see that we have more male than female students in our data. In addition,
-each statistic (Q1, median, mean, Q3, min, max) is shifted up about 40 points
+each statistic (median, mean, min, max) is shifted up about 40 points
 for males, compared to females. This suggests that the distributions share a
 shape, but are centered at different scale scores. We will explore this
 hypothesis directly by looking at shapes through visualization.
@@ -622,9 +615,8 @@ gender and a stacked histogram broken down by gender.
 
 ```{r VisualizeGenderGap, echo=TRUE, out.width = "50%", fig.show = "hold", out.extra='style="margin: auto"'}
 # // Step 1: Initialize a set of distinguishable colors for graphics
-colors <- c("red","dodgerblue3","green","coral","violet","burlywood2","grey68")
+plot_colors <- c("red","dodgerblue3","green","coral","violet","burlywood2","grey68")
 
-# TODO - Fix binwidth, it is wrong here
 
 #Loop over gap number in our table of gaps
 for (i in 1:n.gaps) {
@@ -660,7 +652,7 @@ for (i in 1:n.gaps) {
         geom_histogram(alpha = 0.5, binwidth = 20) + 
     coord_cartesian(expand = FALSE) + 
         scale_fill_manual(name = labels[dem],
-                          values = colors[1:length(levels(as.factor(tmp[,dem])))]) +
+                          values = plot_colors[1:length(levels(as.factor(tmp[,dem])))]) +
         scale_x_continuous(name = paste(labels[subject], ", Grade", grade)) 
   # print(h) #Print histogram
   
@@ -740,28 +732,21 @@ for (i in 1:n.gaps) {
   lvl1 <- gaps[i,"level_1"]
   lvl2 <- gaps[i,"level_2"]
 
-  tmp <- test_data[test_data$grade_level == grade,] #Isolates grade level
-  tmp <- tmp[tmp[,dem] == lvl1 | tmp[,dem] == lvl2, ]#Isolates demographic groups
-  res <- levels(as.factor(tmp[,group.by])) #Different levels of 'group.by' to explore
-
+  tmp <- test_data %>% filter(grade_level == grade) %>%
+      filter(get(dem) %in% c(lvl1, lvl2))
+  
   print(paste("Grade:",grade,",",labels[subject])) #Print subject and grade level
 
   #Loop over group.by levels
-  for (re in res) {
-
-    #Isolates observations from particular group in group.by
-    data.res <- tmp[tmp[,group.by] == re, ]
-
+    comptab <- tmp %>% group_by(get(group.by), get(dem)) %>% select(subject) %>%
+    summarize_all(.funs = c("mean", "median", "sd", "min", "max")) 
     
-    comptab <- data.res %>% group_by(get(dem)) %>% select(subject) %>%
-    summarize_all(.funs = c("mean", "median", "sd", "min", "max"))
-  
+    # Rename the first column to be the demographic characteristic
+    names(comptab)[1] <- group.by
+    names(comptab)[2] <- dem
     
-    print(comptab) #Prints comparison table
-
-  } #End loop over group.by levels
-
-} #End loop over gap number
+    print(comptab)
+} 
 
 ```
 
@@ -794,8 +779,8 @@ for (i in 1:n.gaps) {
   lvl1 <- gaps[i,"level_1"]
   lvl2 <- gaps[i,"level_2"]
   
-  tmp <- test_data[test_data$grade_level == grade,] #Isolates grade level
-  tmp <- tmp[tmp[,dem] == lvl1 | tmp[,dem] == lvl2, ]#Isolates demographic groups
+  tmp <- test_data %>% filter(grade_level == grade) %>%
+      filter(get(dem) %in% c(lvl1, lvl2)) %>% as.data.frame()
   res <- levels(as.factor(tmp[,group.by])) #Different levels of 'group.by' to explore
    
    # Facet by group by
@@ -803,16 +788,16 @@ for (i in 1:n.gaps) {
                               fill = as.factor(tmp[,dem]))) + 
               ggtitle(paste("Grade:", grade,",", 
                             labels[subject],",",labels[group.by])) +
-              geom_histogram(alpha = 0.5, binwidth = 50) + 
+              geom_histogram(alpha = 0.5, binwidth = 25) + 
               scale_fill_manual(name = labels[dem],
-              values = colors[1:length(levels(as.factor(tmp[,dem])))]) +
+              values = plot_colors[1:length(levels(as.factor(tmp[,dem])))]) +
               scale_x_continuous(name = paste(labels[subject]))  + 
-     facet_wrap(group.by)
+     facet_wrap(group.by) 
    
     # Add reference levels
     h <- add_ref_levels(plot = h, prof_levels = prof_lev, direction = "vertical", 
                          grade = grade, subject = subject) + 
-      theme_bw() + theme(legend.position = c(0.2, 0.8))
+      theme_bw() 
     print(h) #Print histogram
     
 }
@@ -1245,10 +1230,13 @@ for(i in 1:n.gaps){
                 geom_bar(stat="identity")+
                 geom_text(aes(label=count, vjust=-0.25))+
                 scale_x_discrete(name = "School Code")+
-                scale_y_continuous(name = paste("Number of students",cut.labels[cut]))+
+                scale_y_continuous(name = paste("Number of students",cut.labels[cut]),
+                                   limits = c(0, max(school_table$count)),
+                                   expand = expand_scale(mult = 0, add = c(0, 10))) +
+      coord_cartesian() + 
                 ggtitle(paste("Grade",grade,labels[subject], 
                               "Number of", labels[dem],target,
-                              "Students",cut.labels[cut],
+                              "Students \n",cut.labels[cut],
                               "(by School)")) + theme_bw()
   
     print(barp)
@@ -1441,7 +1429,18 @@ for (i in 1:n.gaps) {
   # // Step 6. Transform the regression coefficients to a data object for plotting
   chartData <- bind_rows(betas_unadj, betas_adj_control_1, betas_adj_control_2, 
                       betas_adj_all)
-  
+  chartData
+}
+```
+
+We can compare the coefficients for our variables across these different models to see how 
+additional control variables attenuate or exacerbate the gap between female and male 
+students in our data. 
+
+Below - we plot the last result from this loop over the different gaps. 
+
+
+```{r plotCoefficients, echo=TRUE}
   # // Step 7. Plot
   
   #Set y-axis limits
@@ -1450,7 +1449,7 @@ for (i in 1:n.gaps) {
   
   if(lim2 > 0 & lim1 > 0){
     
-    lim1 <- -1
+    lim1 <- 0
   }
   
   if(lim2 < 0 & lim1 < 0){
@@ -1466,17 +1465,19 @@ for (i in 1:n.gaps) {
               geom_bar(stat = 'identity', color = I("black")) +
               scale_fill_brewer(type = "seq", palette = 8) +
               geom_hline(yintercept = 0) + 
-              guides(fill = guide_legend("", keywidth = 6, nrow = 2)) + 
+              guides(fill = guide_legend("", keywidth = 4, nrow = 2)) + 
               geom_text(aes(label = -estimate_lab, vjust = -0.3)) +
-              scale_y_continuous(limits = c(lim1, lim2), name = "Scale Score Gap") + 
+              scale_y_continuous(limits = c(lim1, lim2), name = "Scale Score Gap", 
+                                 expand = expand_scale(mult = 0, 
+                                                       add = c(0, lim2/15))) + 
+    coord_cartesian(expand = TRUE) +
               labs(title = paste("Differences in grade",grade,labels[subject],
                                  "between",labels[dem],target,"and",ref.group), 
                                   x = "") + 
     theme_bw() + theme(legend.position = "bottom", axis.text.x = element_blank(), 
                                                     axis.ticks.x = element_blank()) 
   print(b)
-  
-}
+
 ```
 
 The gender gap, as demonstrated by the regression coefficient values visualized

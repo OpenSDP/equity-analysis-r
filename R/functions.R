@@ -1,4 +1,3 @@
-# Packages
 ##Begin function
 #' Gap Test
 #' @description Explores dataset to find widest achievement gaps
@@ -25,18 +24,41 @@
 #' @author OpenSDP
 #' 
 #' 
-#' @details Th
-#' @references 
+#' @details This function implements effect size calculations taken from their 
+#' definitions here: \url{https://en.wikipedia.org/wiki/Effect_size}. Effect 
+#' size definitions vary - generally the differences matter most in the cases 
+#' of small sample sizes. 
+#' 
+#' @references For a comprehensive and open review of the effect size literature 
+#' see \url{https://en.wikipedia.org/wiki/Effect_size}
 #'
 #' @return Outputs a data.frame containing several different metrics for 
 #' comparing the differences between the groups including Cohen's effect size, 
 #' Hedges g, and the correlation coefficient. Where necessary, small sample 
 #' size corrections are applied. 
 #' 
+#' \describe{
+#'     \item{\code{level_1}}{The label of the first group in the gap comparison.}
+#'     \item{\code{lvl1_n}}{The count of observations belonging to the first group.}
+#'     \item{\code{level_2}}{The label of the second group in the gap comparison.}
+#'     \item{\code{lvl2_n}}{The count of observations belonging to the second group.}
+#'     \item{\code{feature}}{The student subgroup that the levels of comparison belong to.}
+#'     \item{\code{grade_level}}{The grade level of the students in the comparison groups.}
+#'     \item{\code{outcome}}{The outcome measure for the comparison.}
+#'     \item{\code{mean_diff}}{The mean (or median) difference between the two groups on the outcome scale.}
+#'     \item{\code{cohens_d}}{The effect size of the mean difference using Cohen's d calculation.}
+#'     \item{\code{hedges_g}}{The effect size of the mean difference using Hedges' g calculation.}
+#'     \item{\code{corr_coef}}{Currently not used. Only available for paired comparisons.}
+#'   }
+#' 
+#' Note that if the sample size is smaller than the user defined cutoff for sample size 
+#' \code{cut} the comparison rows will be returned with NA values for the difference 
+#' calculations. 
+#' 
 #' @export
 #'
 #' @examples
-gap.test <- function(df, grade, outcome, features, n = 5, sds = NULL, 
+gap_test <- function(df, grade, outcome, features, n = 5, sds = NULL, 
                      cut = 50, med = FALSE, verbose = FALSE, effect_size = "cohens_d") {
   # Check for user-provided standard deviations
   if (is.null(sds)) {
@@ -194,7 +216,7 @@ gap.test <- function(df, grade, outcome, features, n = 5, sds = NULL,
   if (missing(n)) {
     n <- ifelse(nrow(output.table) < 10, 
                 nrow(output.table), 10)
-    message(paste0("No cutoff provided, setting it to ", n))
+    message(paste0("No table row limit (n) provided, setting it to ", n))
   } else {
     n <- ifelse(n > nrow(output.table), nrow(output.table), 
                 n)
@@ -298,7 +320,8 @@ add_ref_levels <- function(plot, prof_levels, direction = c("horizontal", "verti
   }
   # Set text size based on presence of faceting
   if(!is.null(ggplot_build(plot)$layout$facet$params$facets)) {
-    text_size <- 1.5
+    facet_count <- length(ggplot_build(plot)$layout$layout$PANEL)
+    text_size <- 4 / (facet_count * 0.33)
   } else {
     text_size <- 4
   }
@@ -375,7 +398,7 @@ adjust_hedges_g <- function(diff, x, y) {
 #' @export
 #'
 #' @examples
-autoplot.gap_test <- function(df, what = "effect_size") {
+gap_test_plot <- function(df, what = "effect_size") {
   df$comp_name <- paste(df$level_1, df$level_2, sep = "-")
   df$effect_size <- df[, what]
   

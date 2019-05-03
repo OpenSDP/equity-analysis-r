@@ -1,4 +1,4 @@
-# Unit tests for gap.test function
+# Unit tests for gap_test function
 
 source("../functions.R")
 # Generate test data
@@ -26,14 +26,14 @@ context("Test fail conditions, warnings, and errors")
 
 test_that("gap test fails when it should", {
   
-  expect_error(gap.test(df = test_df, 
+  expect_error(gap_test(df = test_df, 
                           grade = "grad", 
                           outcome = "math_ss", 
                           features = "gender", 
                           cut = 20, 
                           n = 2))
   
-  expect_error(gap.test(df = test_df, 
+  expect_error(gap_test(df = test_df, 
                           grade = "grade", 
                           outcome = "math_ss", 
                           features = "gender", 
@@ -42,7 +42,7 @@ test_that("gap test fails when it should", {
                           n = 2))
   
   # Need to make a better error handling of this case
-  expect_error(gap.test(df = test_df[1:2,], 
+  expect_error(gap_test(df = test_df[1:2,], 
            grade = "grade", 
            outcome = "math_ss", 
            features = "gender", 
@@ -57,7 +57,7 @@ test_that("gap test fails when it should", {
 context("Test result structure returned is correct")
 
 test_that("Row counts are right", {
-  gt <- gap.test(df = test_df,
+  gt <- gap_test(df = test_df,
            grade = "grade",
            outcome = "math_ss",
            features = "gender",
@@ -66,7 +66,7 @@ test_that("Row counts are right", {
   expect_equal(nrow(gt), 2)
   expect_equal(ncol(gt), 7)
   
-  gt <- gap.test(df = test_df,
+  gt <- gap_test(df = test_df,
                  grade = "grade",
                  outcome = "math_ss",
                  features = "gender",
@@ -76,7 +76,7 @@ test_that("Row counts are right", {
   expect_equal(ncol(gt), 11)
   expect_equal(nrow(gt), 2)
   
-  gt <- gap.test(df = test_df3,
+  gt <- gap_test(df = test_df3,
                  grade = "grade",
                  outcome = "math_ss",
                  features = "econ",
@@ -86,7 +86,7 @@ test_that("Row counts are right", {
   expect_equal(ncol(gt), 7)
   expect_equal(nrow(gt), 10)
   
-  gt <- gap.test(df = test_df3,
+  gt <- gap_test(df = test_df3,
                  grade = "grade",
                  outcome = "math_ss",
                  features = "econ",
@@ -100,14 +100,14 @@ test_that("Row counts are right", {
 context("Test function parameters have desired effect")
 
 test_that("Test cutoff and n count parameters work", {
-  gt <- gap.test(df = test_df2,
+  gt <- gap_test(df = test_df2,
            grade = "grade",
            outcome = "math_ss",
            features = "gender",
            cut = 5, verbose = TRUE,
            n = 5)
   expect_equal(nrow(gt), 5)
-  gt <- gap.test(df = test_df2,
+  gt <- gap_test(df = test_df2,
                  grade = "grade",
                  outcome = "math_ss",
                  features = "gender",
@@ -115,7 +115,57 @@ test_that("Test cutoff and n count parameters work", {
                  n = 2)
   expect_equal(nrow(gt), 2)
   
+  gt <- gap_test(df = test_df2,
+                 grade = "grade",
+                 outcome = "math_ss",
+                 features = "gender",
+                 cut = 500, verbose = TRUE,
+                 n = 10)
+  expect_true(all(is.na(gt$mean_diff)))
   
+  gt <- gap_test(df = test_df2,
+                 grade = "grade",
+                 outcome = "math_ss",
+                 features = "gender",
+                 cut = 1000, verbose = TRUE,
+                 n = 10)
+  expect_true(all(is.na(gt$mean_diff)))
+
+})
+
+test_that("Grade, features and outcome selection all work as intended", {
+  expect_error(gap_test(df = test_df,
+                 grade = "grade2",
+                 outcome = "math_ss",
+                 features = "gender",
+                 cut = 20,
+                 n = 10, verbose = TRUE)
+  )
+  
+  expect_error(gap_test(df = test_df,
+                        outcome = "math_ss",
+                        features = "gender",
+                        cut = 20,
+                        n = 10, verbose = TRUE)
+  )
+  
+  expect_error(gap_test(df = test_df,
+                        grade = "grade",
+                        outcome = "math_ss",
+                        features = "gender2",
+                        cut = 20,
+                        n = 10, verbose = TRUE)
+  )
+  
+  gt <- gap_test(df = test_df3,
+                 grade = "grade",
+                 outcome = "math_ss",
+                 features = "econ",
+                 cut = 20,
+                 n = 10)
+  expect_true(all(gt$feature == "econ"))
+  expect_true(all(gt$outcome == "math_ss"))
+  expect_true(all(gt$grade_level %in% unique(test_df3$grade)))
   
 })
 
@@ -142,14 +192,14 @@ test_that("Outcome variables work", {
 
 
 # 
-# gap.test(df = test_df2, 
+# gap_test(df = test_df2, 
 #          grade = "grade", 
 #          outcome = "math_ss", 
 #          features = "gender", 
 #          cut = 20, 
 #          n = 2)
 # 
-# gap.test(df = test_df3, 
+# gap_test(df = test_df3, 
 #          grade = "grade", 
 #          outcome = "math_ss", 
 #          features = "econ", 
@@ -157,7 +207,7 @@ test_that("Outcome variables work", {
 #          n = 6)
 # 
 # # Pads NAs, should just return max amount
-# gap.test(df = test_df3, 
+# gap_test(df = test_df3, 
 #          grade = "grade", 
 #          outcome = "math_ss", 
 #          features = "econ", 
@@ -171,7 +221,7 @@ test_that("Outcome variables work", {
 # 
 # 
 # 
-# gap.test(df = test_df, 
+# gap_test(df = test_df, 
 #          grade = "grade", 
 #          outcome = "math_ss", 
 #          features = "gender", 
@@ -179,7 +229,7 @@ test_that("Outcome variables work", {
 #          cut = 20, 
 #          n = 2)
 # 
-# gap.test(df = test_df, 
+# gap_test(df = test_df, 
 #          grade = "grade", 
 #          outcome = "math_ss", 
 #          features = "gender", 
@@ -189,7 +239,7 @@ test_that("Outcome variables work", {
 #          med = TRUE)
 # 
 # 
-# autoplot.gap_test(gap.test(df = test_df, 
+# autoplot.gap_test(gap_test(df = test_df, 
 #                            grade = "grade", 
 #                            outcome = "math_ss", 
 #                            features = "gender", 
@@ -198,7 +248,7 @@ test_that("Outcome variables work", {
 #                            n = 2))
 # 
 # 
-# gap.table <- gap.test2(df = texas_data,
+# gap.table <- gap_test2(df = texas_data,
 #                       grade = "grade_level",
 #                       outcome = "math_ss",
 #                       features = c('eco_dis','lep','iep','race_ethnicity','male'),
