@@ -103,7 +103,6 @@ gap_test <- function(df, grade, outcome, features, n = 5, sds = NULL,
   }
   
   # Test to see if data is correct class
-  # TODO - try coercing sds grades into an integer if needed
   if (class(sds[,grade]) %nin% c('integer', 'numeric') | # this is too strict
     class(sds[,outcome]) != 'numeric') {
       #Make example dataframe of sds
@@ -122,10 +121,7 @@ gap_test <- function(df, grade, outcome, features, n = 5, sds = NULL,
       
   }
   
-  # Convert features to factors
-  # TODO - check if these need to be factors?
   df[,features] <- lapply(df[,features, drop = FALSE], as.character)
-  df[,features] <- lapply(df[,features, drop = FALSE], as.factor)
   
   # Get all grade levels for the chosen tested subject
   grades <- unique(df[!is.na(df[,outcome]),grade])
@@ -193,19 +189,12 @@ gap_test <- function(df, grade, outcome, features, n = 5, sds = NULL,
           hedges_g <- adjust_hedges_g(raw_diff, level1.data, level2.data)
         }
         
-        # TODO: Tidy this bit up
-        output.table.tmp <- data.frame(level_1 = level1,
-                                       lvl1_n = length(level1.data),
-                                   level_2 = level2,
-                                   lvl2_n = length(level2.data), 
-                                   feature = feature,
-                                   grade_level = gr,
-                                   outcome = outcome,
-                                   mean_diff = raw_diff, 
-                                   cohens_d = cohens_d,
-                                   hedges_g = hedges_g,
-                                   corr_coef = NA,
-                                   stringsAsFactors = FALSE)
+        output.table.tmp <- data.frame(level_1 = level1, lvl1_n = length(level1.data),
+                                       level_2 = level2, lvl2_n = length(level2.data), 
+                                       feature = feature, grade_level = gr, outcome = outcome,
+                                       mean_diff = raw_diff, cohens_d = cohens_d, 
+                                       hedges_g = hedges_g, corr_coef = NA, 
+                                       stringsAsFactors = FALSE)
         output.table <- rbind(output.table, output.table.tmp)
       } #End loop over combinations
       
@@ -301,7 +290,6 @@ get_cluster_vcov <- function(model, cluster){
 add_ref_levels <- function(plot, prof_levels, direction = c("horizontal", "vertical"), 
                            grade, subject) {
   direction <- match.arg(direction)
-  # TODO - improve this so it can place the annotations on the facets correctly
   # Get only the subjects and grades we need, drop the rest
   plot_levels <- prof_levels[prof_levels$grade == grade, ]
   plot_levels <- plot_levels[plot_levels$subject == subject, ]
@@ -425,8 +413,6 @@ gap_test_plot <- function(df, what = "effect_size") {
     ylims[2] <- 0.1
   }
   
-  # TODO - fix the expression in the caption
-  
   barp <- ggplot(df, aes(x = reorder(comp_name, abs(effect_size)),
                          group = grade_level,
                          y = effect_size)) +
@@ -444,8 +430,10 @@ gap_test_plot <- function(df, what = "effect_size") {
     scale_y_continuous(name = "Effect Size", limits = ylims) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 8)) +
     labs(title = paste0("Top ", nrow(df), " gap effect sizes"), 
-         caption = expression("Calculation: d = " ~ frac(bar(Delta), sigma[pooled]) ~ "\n" ~
-                                "Effect Size = " ~  frac(d, sqrt(d^2 + 4)))) + 
+         caption = expression("Calculation: d = " ~ frac(bar(Delta), s[pooled]) ~ "\n" ~
+                                 s[pooled] ~ " = " ~  sqrt(frac((eta[1]-1) ~ s[1]^2 + (eta[2]-1) ~ s[2]^2, 
+                                                           eta[1] + eta[2] -2)) ~ "\n")
+         ) + 
     facet_grid(~feature) + theme_bw()
   print(barp)
   

@@ -1181,7 +1181,7 @@ for (i in 1:n.gaps) {
                 ggtitle(paste("Grade",grade,labels[subject], 
                               "Medians for", labels[dem],target,
                               ", by School"))
-  # TODO - adding ref levels could be better for this
+  
   barp <- add_ref_levels(plot = barp, prof_levels = prof_lev, direction = "horizontal", 
                          grade = grade, subject = subject) + theme_bw()
   print(barp)
